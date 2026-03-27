@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Admin - EPG{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="titulo-seccion"><i class="bi bi-speedometer2 me-2"></i>Panel de Control</h4>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.backup_manual') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-cloud-download me-1"></i>Backup
+    </a>
+    <a href="{{ url_for('tesorera.exportar') }}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Exportar Presupuesto
+    </a>
+  </div>
+</div>
+
+<!-- Tarjetas resumen -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card tarjeta-resumen ingreso-card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <small class="text-muted d-block mb-1">TOTAL INGRESOS</small>
+            <h5 class="fw-bold mb-0">S/ {{ '{:,.2f}'.format(total_ingresos) }}</h5>
+          </div>
+          <i class="bi bi-arrow-up-circle-fill text-success" style="font-size:2rem;opacity:.6;"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card tarjeta-resumen gasto-card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <small class="text-muted d-block mb-1">TOTAL GASTOS</small>
+            <h5 class="fw-bold mb-0">S/ {{ '{:,.2f}'.format(total_gastos) }}</h5>
+          </div>
+          <i class="bi bi-arrow-down-circle-fill text-danger" style="font-size:2rem;opacity:.6;"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card tarjeta-resumen ret-card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <small class="text-muted d-block mb-1">TOTAL RETENCIONES</small>
+            <h5 class="fw-bold mb-0">S/ {{ '{:,.2f}'.format(total_ret_ocep + total_ret_epg) }}</h5>
+            <small class="text-muted">OCEP: S/ {{ '{:,.2f}'.format(total_ret_ocep) }}</small>
+          </div>
+          <i class="bi bi-percent text-warning" style="font-size:2rem;opacity:.6;"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card tarjeta-resumen saldo-card shadow-sm {% if total_saldo < 0 %}saldo-neg{% elif total_saldo == 0 %}saldo-cero{% else %}saldo-pos{% endif %}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <small class="text-muted d-block mb-1">SALDO TOTAL</small>
+            <h5 class="fw-bold mb-0">S/ {{ '{:,.2f}'.format(total_saldo) }}</h5>
+          </div>
+          <i class="bi bi-wallet2" style="font-size:2rem;opacity:.6;"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if pendientes_docente > 0 %}
+<div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  <div>
+    Hay <strong>{{ pendientes_docente }}</strong> Planilla(s) Docente Invitado pendiente(s).
+    <a href="{{ url_for('admin.registros', docente_invitado=1) }}" class="alert-link ms-2">Ver ahora</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Tabla resumen programas -->
+<div class="card shadow-sm">
+  <div class="card-header bg-light">
+    <h6 class="mb-0"><i class="bi bi-table me-2"></i>Resumen por Programa</h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="thead-epg">
+          <tr>
+            <th>Tipo</th>
+            <th>Facultad</th>
+            <th>Mencion</th>
+            <th class="text-end">Ingresos</th>
+            <th class="text-end">Gastos</th>
+            <th class="text-end">Ret. Total</th>
+            <th class="text-end">Saldo</th>
+            <th class="text-center">Situacion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in programas %}
+          <tr>
+            <td><span class="badge-tipo {{ p.tipo_programa|lower }}">{{ p.tipo_programa }}</span></td>
+            <td class="small">{{ p.facultad }}</td>
+            <td class="small fw-semibold">{{ p.mencion }}</td>
+            <td class="text-end small">S/ {{ '{:,.2f}'.format(p.ingresos) }}</td>
+            <td class="text-end small">S/ {{ '{:,.2f}'.format(p.gastos_total) }}</td>
+            <td class="text-end small">S/ {{ '{:,.2f}'.format(p.retencion_ocep + p.retencion_epg) }}</td>
+            <td class="text-end small fw-bold">S/ {{ '{:,.2f}'.format(p.saldo_actual) }}</td>
+            <td class="text-center">
+              <span class="badge-situacion {{ p.situacion|replace(' ','_')|lower }}">{{ p.situacion }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

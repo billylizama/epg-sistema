@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analisis Presupuestal - EPG</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --g:        #6B1A2A;
+      --g2:       #8B2340;
+      --g3:       #A8485E;
+      --g-pale:   #F5E8EC;
+      --bg:       #F4F1F2;
+      --card:     #FFFFFF;
+      --card2:    #FDF8F9;
+      --sidebar:  #3D0A14;
+      --kpibar:   #541422;
+      --border:   #E8D5DA;
+      --txt:      #2C1015;
+      --txt2:     #7A5060;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      height: 44px;
+      background: var(--g);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 2px 10px rgba(107,26,42,.3);
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-logo {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+    }
+    .header-title { font-size: 13px; font-weight: 700; color: #fff; }
+    .header-center { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: .5px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-right .ts { font-size: .65rem; color: rgba(255,255,255,.75); }
+    .btn-back {
+      color: rgba(255,255,255,.85); font-size: 1.2rem;
+      text-decoration: none; transition: color .2s;
+    }
+    .btn-back:hover { color: #fff; }
+
+    /* ── KPI BAR ── */
+    .kpi-bar {
+      height: 60px;
+      background: var(--kpibar);
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .kpi-item {
+      flex: 1; display: flex; align-items: center;
+      gap: 10px; padding: 0 16px;
+      border-right: 1px solid var(--border);
+      transition: background .2s;
+    }
+    .kpi-item:last-child { border-right: none; }
+    .kpi-item:hover { background: rgba(255,255,255,.06); }
+    .kpi-icon { font-size: 1.6rem; opacity: .8; }
+    .kpi-lbl { font-size: .58rem; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .6px; }
+    .kpi-val { font-size: .95rem; font-weight: 700; color: #fff; }
+    .kpi-item.ing .kpi-icon  { color: #F4A8B5; }
+    .kpi-item.gas .kpi-icon  { color: #F4C2A1; }
+    .kpi-item.ocep .kpi-icon { color: #F4E4A8; }
+    .kpi-item.epg  .kpi-icon { color: #A8D4F4; }
+    .kpi-item.sal  .kpi-icon { color: #A8F4C2; }
+
+    /* ── BODY LAYOUT ── */
+    .body-wrap {
+      display: flex;
+      height: calc(100vh - 44px - 60px);
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 168px;
+      background: var(--sidebar);
+      display: flex; flex-direction: column;
+      border-right: 1px solid rgba(212,160,173,.2);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .nav-section-lbl {
+      padding: 10px 12px 3px;
+      font-size: .6rem; color: rgba(255,255,255,.35);
+      text-transform: uppercase; letter-spacing: .8px;
+    }
+    .nav-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 14px; color: rgba(255,255,255,.65); cursor: pointer;
+      font-size: .78rem;
+      border-left: 3px solid transparent;
+      transition: all .18s;
+      user-select: none;
+    }
+    .nav-btn:hover { color: #fff; background: rgba(255,255,255,.07); }
+    .nav-btn.active { color: #fff; background: rgba(245,232,236,.12); border-left-color: #F4A8B5; }
+    .nav-btn i { width: 14px; font-size: .82rem; }
+
+    /* filtros */
+    .filter-sep { border-top: 1px solid rgba(212,160,173,.15); margin: 8px 0; }
+    .filter-lbl { padding: 4px 12px; font-size: .6rem; color: #F4A8B5; font-weight: 700; text-transform: uppercase; }
+    .filter-group { padding: 2px 12px; font-size: .62rem; color: rgba(255,255,255,.4); margin-top: 4px; font-weight: 600; }
+    .filter-list { padding: 0 10px 4px; }
+    .filter-item { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+    .filter-item label { font-size: .65rem; color: rgba(255,255,255,.6); cursor: pointer; line-height: 1.3; }
+    .filter-item input[type=checkbox] { accent-color: #F4A8B5; width: 10px; height: 10px; cursor: pointer; flex-shrink: 0; }
+    .btn-clear {
+      margin: 6px 10px 8px;
+      width: calc(100% - 20px);
+      padding: 4px 0; font-size: .65rem;
+      background: transparent;
+      border: 1px solid rgba(212,160,173,.25); color: rgba(255,255,255,.45);
+      border-radius: 4px; cursor: pointer;
+    }
+    .btn-clear:hover { border-color: #F4A8B5; color: #fff; }
+
+    /* ── GRID DE GRAFICOS ── */
+    .charts-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+      padding: 8px;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 6px rgba(107,26,42,.07);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .chart-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 13px 4px;
+      border-bottom: 1px solid #F5EEF0;
+      flex-shrink: 0;
+    }
+    .chart-title {
+      font-size: .68rem; font-weight: 700;
+      color: var(--g); text-transform: uppercase; letter-spacing: .4px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .chart-title i { color: var(--g2); font-size: .78rem; }
+    .chart-subtitle { font-size: .58rem; color: var(--txt2); }
+    .chart-body {
+      flex: 1; padding: 6px 10px 8px;
+      min-height: 0; position: relative;
+      background: var(--card);
+    }
+    .chart-body canvas { width: 100% !important; height: 100% !important; }
+
+    .card-tall { grid-row: 1 / 3; }
+
+    /* health bar */
+    .health-list { padding: 6px 12px 8px; overflow-y: auto; flex: 1; background: var(--card); }
+    .health-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .health-name { font-size: .6rem; color: var(--txt2); width: 120px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .health-bar-wrap { flex: 1; height: 7px; background: #F0E8EA; border-radius: 4px; overflow: hidden; }
+    .health-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .health-val { font-size: .6rem; color: var(--txt2); width: 70px; text-align: right; flex-shrink: 0; }
+    .health-badge { font-size: .55rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
+    .hb-bien       { background: #D6EFDA; color: #1A5C26; }
+    .hb-critico    { background: #FFF3CD; color: #7A5000; }
+    .hb-limite     { background: #FFF3CD; color: #7A5000; }
+    .hb-sobrepasado{ background: #FAD7DC; color: #7A0A18; }
+
+    /* Refresh */
+    .refresh-pill {
+      position: fixed; bottom: 10px; right: 12px;
+      background: rgba(107,26,42,.08);
+      border: 1px solid var(--guinda-border, #D4A0AD);
+      border-radius: 20px; padding: 3px 10px;
+      font-size: .6rem; color: var(--txt2); z-index: 50;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .refresh-pill .dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #F5EEF0; }
+    ::-webkit-scrollbar-thumb { background: #D4A0AD; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo"><i class="bi bi-mortarboard-fill" style="color:#fff;"></i></div>
+    <span class="header-title">ESCUELA DE POSGRADO</span>
+  </div>
+  <span class="header-center">Analisis Presupuestal en Tiempo Real</span>
+  <div class="header-right">
+    <span class="ts" id="tsUpdate"></span>
+    <a href="{{ url_for('admin.dashboard') if current_user.rol == 'admin' else url_for('tesorera.presupuesto') }}"
+       class="btn-back" title="Volver al sistema">
+      <i class="bi bi-arrow-left-circle-fill"></i>
+    </a>
+  </div>
+</div>
+
+<!-- KPI BAR -->
+<div class="kpi-bar">
+  <div class="kpi-item ing">
+    <i class="bi bi-graph-up-arrow kpi-icon"></i>
+    <div><div class="kpi-lbl">Ingresos</div><div class="kpi-val" id="kpi-ing">—</div></div>
+  </div>
+  <div class="kpi-item gas">
+    <i class="bi bi-graph-down-arrow kpi-icon"></i>
+    <div><div class="kpi-lbl">Gastos</div><div class="kpi-val" id="kpi-gas">—</div></div>
+  </div>
+  <div class="kpi-item ocep">
+    <i class="bi bi-percent kpi-icon"></i>
+    <div><div class="kpi-lbl">Ret. OCEP (10%)</div><div class="kpi-val" id="kpi-ocep">—</div></div>
+  </div>
+  <div class="kpi-item epg">
+    <i class="bi bi-bank kpi-icon"></i>
+    <div><div class="kpi-lbl">Ret. EPG (5%)</div><div class="kpi-val" id="kpi-epg">—</div></div>
+  </div>
+  <div class="kpi-item sal">
+    <i class="bi bi-wallet2 kpi-icon"></i>
+    <div><div class="kpi-lbl">Saldo Disponible</div><div class="kpi-val" id="kpi-sal">—</div></div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body-wrap">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section-lbl">Vista</div>
+    <div class="nav-btn active" id="btn-principal" onclick="setVista('',this)">
+      <i class="bi bi-house-fill"></i> Principal
+    </div>
+    <div class="nav-btn" id="btn-maestrias" onclick="setVista('MAESTRIA',this)">
+      <i class="bi bi-book-fill"></i> Maestrias
+    </div>
+    <div class="nav-btn" id="btn-doctorados" onclick="setVista('DOCTORADO',this)">
+      <i class="bi bi-mortarboard-fill"></i> Doctorados
+    </div>
+
+    <div class="filter-sep"></div>
+    <div class="filter-lbl"><i class="bi bi-funnel-fill me-1"></i>Filtros</div>
+    <div class="filter-group">Facultad</div>
+    <div class="filter-list" id="filtroFacs"></div>
+    <div class="filter-group">Mencion</div>
+    <div class="filter-list" id="filtroMens" style="max-height:120px;overflow-y:auto;"></div>
+    <button class="btn-clear" onclick="limpiarFiltros()">
+      <i class="bi bi-x-circle me-1"></i>Borrar filtros
+    </button>
+  </div>
+
+  <!-- GRID -->
+  <div class="charts-grid">
+
+    <!-- 1. Presupuesto por Facultad (columna grande izquierda) -->
+    <div class="chart-card card-tall">
+      <div class="chart-header">
+        <div class="chart-title"><i class="bi bi-bar-chart-horizontal-fill"></i> Presupuesto por Facultad</div>
+      </div>
+      <div class="chart-body">
+        <canvas id="cFacultad"></canvas>
+      </div>
+    </div>
+
+    <!-- 2. Saldo por Nivel Academico (donut) -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title"><i class="bi bi-pie-chart-fill"></i> Saldo por Nivel</div>
+      </div>
+      <div class="chart-body">
+        <canvas id="cNivel"></canvas>
+      </div>
+    </div>
+
+    <!-- 3. Distribucion del Gasto (donut) -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title"><i class="bi bi-pie-chart"></i> Tipo de Gasto</div>
+      </div>
+      <div class="chart-body">
+        <canvas id="cTipoGasto"></canvas>
+      </div>
+    </div>
+
+    <!-- 4. Erosion de Fondos (waterfall horizontal) -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title"><i class="bi bi-funnel-fill"></i> Erosion de Fondos</div>
+        <span class="chart-subtitle" id="pctSaldo"></span>
+      </div>
+      <div class="chart-body">
+        <canvas id="cErosion"></canvas>
+      </div>
+    </div>
+
+    <!-- 5. Semaforo presupuestal (health) -->
+    <div class="chart-card" style="grid-column: 3;">
+      <div class="chart-header">
+        <div class="chart-title"><i class="bi bi-activity"></i> Salud Presupuestal</div>
+        <span class="chart-subtitle" id="lblSalud"></span>
+      </div>
+      <div class="health-list" id="healthList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Refresh pill -->
+<div class="refresh-pill">
+  <div class="dot"></div>
+  Tiempo real &nbsp;|&nbsp; próx. actualización: <span id="cd">30</span>s
+</div>
+
+<script>
+// ─────────────────────────────────────────────────
+//  ESTADO
+// ─────────────────────────────────────────────────
+let tipoActivo = '';
+let filtroFacs = [];
+let filtroMens = [];
+const charts = {};
+let cdVal = 30;
+let cdTimer;
+
+// ─────────────────────────────────────────────────
+//  UTILES
+// ─────────────────────────────────────────────────
+const sol = n => 'S/ ' + Number(n).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+const COLORES = ['#6B1A2A','#8B2340','#A8485E','#541422','#C06878',
+                 '#3D0A14','#7B3040','#D08898','#4A1020','#B05065'];
+
+const COLORES_SOFT = ['rgba(107,26,42,.8)','rgba(139,35,64,.8)','rgba(168,72,94,.8)',
+                      'rgba(84,20,34,.8)','rgba(192,104,120,.8)','rgba(61,10,20,.8)',
+                      'rgba(123,48,64,.8)','rgba(208,136,152,.8)','rgba(74,16,32,.8)','rgba(176,80,101,.8)'];
+
+function qs() {
+  const p = new URLSearchParams();
+  if (tipoActivo) p.set('tipo', tipoActivo);
+  filtroFacs.forEach(f => p.append('fac', f));
+  filtroMens.forEach(m => p.append('men', m));
+  return p.toString();
+}
+
+function killChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+const BASE_OPTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 600 },
+  plugins: { legend: { display: false } },
+};
+
+// ─────────────────────────────────────────────────
+//  NAVEGACION
+// ─────────────────────────────────────────────────
+function setVista(tipo, btn) {
+  tipoActivo = tipo;
+  filtroFacs = []; filtroMens = [];
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  cargarFiltros();
+  refreshAll();
+}
+
+// ─────────────────────────────────────────────────
+//  FILTROS
+// ─────────────────────────────────────────────────
+function cargarFiltros() {
+  fetch('/api/analytics/filtros?' + qs())
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('filtroFacs').innerHTML = d.facultades.map(f => {
+        const short = f.replace('FAC ','').replace('FACULTAD DE ','');
+        return `<div class="filter-item">
+          <input type="checkbox" value="${f}" onchange="toggleFac(this)">
+          <label title="${f}">${short.slice(0,24)}</label>
+        </div>`;
+      }).join('');
+
+      document.getElementById('filtroMens').innerHTML = d.menciones.map(m => {
+        const abr = m.mencion.split(' - ').pop()?.slice(0,20) || m.mencion.slice(0,20);
+        return `<div class="filter-item">
+          <input type="checkbox" value="${m.mencion}" onchange="toggleMen(this)">
+          <label title="${m.mencion}">${abr}</label>
+        </div>`;
+      }).join('');
+    });
+}
+
+function toggleFac(cb) {
+  filtroFacs = cb.checked
+    ? [...filtroFacs, cb.value]
+    : filtroFacs.filter(f => f !== cb.value);
+  refreshAll();
+}
+
+function toggleMen(cb) {
+  filtroMens = cb.checked
+    ? [...filtroMens, cb.value]
+    : filtroMens.filter(m => m !== cb.value);
+  refreshAll();
+}
+
+function limpiarFiltros() {
+  filtroFacs = []; filtroMens = [];
+  document.querySelectorAll('#filtroFacs input, #filtroMens input')
+    .forEach(c => c.checked = false);
+  refreshAll();
+}
+
+// ─────────────────────────────────────────────────
+//  REFRESH PRINCIPAL
+// ─────────────────────────────────────────────────
+function refreshAll() {
+  const q = qs();
+  Promise.all([
+    fetch('/api/analytics/kpis?'            + q).then(r=>r.json()),
+    fetch('/api/analytics/treemap_facultad?'+ q).then(r=>r.json()),
+    fetch('/api/analytics/donut_nivel?'     + q).then(r=>r.json()),
+    fetch('/api/analytics/erosion?'         + q).then(r=>r.json()),
+    fetch('/api/analytics/dist_gasto?'      + q).then(r=>r.json()),
+    fetch('/api/analytics/top10?'           + q).then(r=>r.json()),
+  ]).then(([kpis, facs, nivel, erosion, distGasto, top10]) => {
+    renderKPIs(kpis);
+    renderFacultad(facs);
+    renderNivel(nivel);
+    renderErosion(erosion);
+    renderTipoGasto(distGasto);
+    renderHealth(top10);
+    document.getElementById('tsUpdate').textContent =
+      'Act. ' + new Date().toLocaleTimeString('es-PE');
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  KPIs
+// ─────────────────────────────────────────────────
+function renderKPIs(d) {
+  document.getElementById('kpi-ing').textContent  = sol(d.ingresos);
+  document.getElementById('kpi-gas').textContent  = sol(d.gastos);
+  document.getElementById('kpi-ocep').textContent = sol(d.ret_ocep);
+  document.getElementById('kpi-epg').textContent  = sol(d.ret_epg);
+  const el = document.getElementById('kpi-sal');
+  el.textContent = sol(d.saldo);
+  el.style.color = d.saldo < 0 ? '#ef5350' : d.saldo < d.ingresos * 0.15 ? '#ffa726' : '#66bb6a';
+}
+
+// ─────────────────────────────────────────────────
+//  1. PRESUPUESTO POR FACULTAD (horizontal grouped bar)
+// ─────────────────────────────────────────────────
+function renderFacultad(data) {
+  killChart('fac');
+  const ctx = document.getElementById('cFacultad').getContext('2d');
+  const labels = data.map(d => {
+    let n = d.facultad.replace('FAC ','').replace('FACULTAD DE ','');
+    return n.length > 28 ? n.slice(0,26)+'…' : n;
+  });
+
+  charts['fac'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Ingresos',
+          data: data.map(d => d.ingresos),
+          backgroundColor: 'rgba(107,26,42,.82)',
+          borderRadius: 3,
+        },
+        {
+          label: 'Gastos',
+          data: data.map(d => d.gastos),
+          backgroundColor: 'rgba(168,72,94,.45)',
+          borderRadius: 3,
+        },
+      ]
+    },
+    options: {
+      ...BASE_OPTS,
+      indexAxis: 'y',
+      plugins: {
+        legend: {
+          display: true, position: 'bottom',
+          labels: { color: '#999', font: {size: 9}, boxWidth: 10, padding: 8 }
+        },
+        tooltip: {
+          callbacks: { label: i => ' ' + sol(i.raw) }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#7A5060', font:{size:8}, callback: v => 'S/'+Math.round(v/1000)+'K' },
+          grid: { color:'rgba(107,26,42,.07)' },
+        },
+        y: { ticks: { color:'#4A1020', font:{size:9} }, grid: { display:false } }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  2. SALDO POR NIVEL (donut)
+// ─────────────────────────────────────────────────
+function renderNivel(data) {
+  killChart('nivel');
+  const ctx = document.getElementById('cNivel').getContext('2d');
+  const CMAP = { MAESTRIA:'#6B1A2A', DOCTORADO:'#A8D4F4', EPG:'#A8485E' };
+
+  charts['nivel'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => `${d.nivel} ${d.pct}%`),
+      datasets: [{
+        data: data.map(d => Math.max(d.saldo, 0)),
+        backgroundColor: data.map(d => CMAP[d.nivel] || '#555'),
+        borderColor: '#16213e',
+        borderWidth: 3,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      ...BASE_OPTS,
+      cutout: '68%',
+      plugins: {
+        legend: {
+          display: true, position: 'bottom',
+          labels: { color:'#4A1020', font:{size:9}, boxWidth:10, padding:6 }
+        },
+        tooltip: { callbacks: { label: i => ' '+sol(i.raw) } }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  3. TIPO DE GASTO (donut)
+// ─────────────────────────────────────────────────
+function renderTipoGasto(data) {
+  killChart('gasto');
+  if (!data.length) return;
+  const ctx = document.getElementById('cTipoGasto').getContext('2d');
+
+  charts['gasto'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.desc),
+      datasets: [{
+        data: data.map(d => d.total),
+        backgroundColor: COLORES,
+        borderColor: '#16213e',
+        borderWidth: 2,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      ...BASE_OPTS,
+      cutout: '55%',
+      plugins: {
+        legend: {
+          display: true, position: 'bottom',
+          labels: { color:'#4A1020', font:{size:8}, boxWidth:9, padding:5 }
+        },
+        tooltip: { callbacks: { label: i => ' '+sol(i.raw) } }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  4. EROSION DE FONDOS (horizontal bar waterfall)
+// ─────────────────────────────────────────────────
+function renderErosion(d) {
+  killChart('erosion');
+  const ctx = document.getElementById('cErosion').getContext('2d');
+
+  const pct = d.pct_saldo;
+  document.getElementById('pctSaldo').textContent =
+    `${pct}% del presupuesto disponible`;
+
+  const vals = [d.ingresos, d.despues_ocep, d.despues_epg, d.saldo_final];
+  const labels = ['Ingresos\nBrutos', 'Tras OCEP\n(−10%)', 'Tras EPG\n(−5%)', 'Saldo\nFinal'];
+  const colors = [
+    'rgba(107,26,42,.90)',
+    'rgba(168,72,94,.80)',
+    'rgba(192,104,120,.75)',
+    d.saldo_final >= 0 ? 'rgba(34,197,94,.85)' : 'rgba(239,68,68,.85)'
+  ];
+
+  charts['erosion'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: vals,
+        backgroundColor: colors,
+        borderRadius: 4,
+        barThickness: 28,
+      }]
+    },
+    options: {
+      ...BASE_OPTS,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            label(i) {
+              const pcts = [100, d.pct_ocep, d.pct_epg, d.pct_saldo];
+              return ' '+sol(i.raw)+' ('+pcts[i.dataIndex]+'%)';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#7A5060', font:{size:8}, callback: v => 'S/'+Math.round(v/1000)+'K' },
+          grid: { color:'rgba(107,26,42,.07)' },
+        },
+        y: { ticks: { color:'#4A1020', font:{size:8.5} }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  5. SALUD PRESUPUESTAL (lista con barras)
+// ─────────────────────────────────────────────────
+function renderHealth(top10) {
+  const container = document.getElementById('healthList');
+  const maxIng = Math.max(...top10.map(p => p.ingresos), 1);
+
+  const SIT_COLOR = {
+    BIEN: { bar:'#4caf50', badge:'hb-bien' },
+    CRITICO: { bar:'#ff9800', badge:'hb-critico' },
+    'EN EL LIMITE': { bar:'#ff9800', badge:'hb-limite' },
+    SOBREPASADO: { bar:'#ef5350', badge:'hb-sobrepasado' },
+  };
+
+  document.getElementById('lblSalud').textContent =
+    top10.filter(p => p.situacion === 'BIEN').length + '/' + top10.length + ' en buen estado';
+
+  container.innerHTML = top10.map(p => {
+    const pct = Math.max(Math.round((p.ingresos / maxIng) * 100), 2);
+    const gastosPct = p.ingresos > 0 ? Math.round(p.gastos/p.ingresos*100) : 0;
+    const cfg = SIT_COLOR[p.situacion] || SIT_COLOR['BIEN'];
+    const nombre = p.mencion.split(' - ').pop()?.slice(0,18) || p.mencion.slice(0,18);
+    return `
+      <div class="health-row">
+        <div class="health-name" title="${p.mencion}">${nombre}</div>
+        <div class="health-bar-wrap">
+          <div class="health-bar-fill" style="width:${gastosPct}%;background:${cfg.bar};"></div>
+        </div>
+        <div class="health-val">${sol(p.saldo)}</div>
+        <span class="health-badge ${cfg.badge}">${p.situacion === 'EN EL LIMITE' ? 'LIMITE' : p.situacion}</span>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────
+//  COUNTDOWN
+// ─────────────────────────────────────────────────
+function startCd() {
+  clearInterval(cdTimer);
+  cdVal = 30;
+  document.getElementById('cd').textContent = cdVal;
+  cdTimer = setInterval(() => {
+    cdVal--;
+    document.getElementById('cd').textContent = cdVal;
+    if (cdVal <= 0) { refreshAll(); cdVal = 30; }
+  }, 1000);
+}
+
+// ─────────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────────
+cargarFiltros();
+refreshAll();
+startCd();
+</script>
+</body>
+</html>

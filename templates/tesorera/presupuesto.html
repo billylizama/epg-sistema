@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Presupuesto por Programa - EPG{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="titulo-seccion"><i class="bi bi-table me-2"></i>Presupuesto por Programa</h4>
+  <a href="{{ url_for('tesorera.exportar') }}" class="btn btn-success btn-sm">
+    <i class="bi bi-file-earmark-excel me-1"></i>Exportar Excel
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0" id="tablaPresupuesto">
+        <thead class="thead-epg">
+          <tr>
+            <th>#</th>
+            <th>Tipo</th>
+            <th>Facultad</th>
+            <th>Mencion</th>
+            <th class="text-end">Ingresos</th>
+            <th class="text-end">Gastos</th>
+            <th class="text-end">Ret. OCEP<br><small>10%</small></th>
+            <th class="text-end">Ret. EPG<br><small>5%</small></th>
+            <th class="text-end">Saldo</th>
+            <th class="text-center">Situacion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in programas %}
+          <tr id="row-{{ p.id }}">
+            <td class="text-muted small">{{ loop.index }}</td>
+            <td><span class="badge-tipo {{ p.tipo_programa|lower }}">{{ p.tipo_programa }}</span></td>
+            <td class="small">{{ p.facultad }}</td>
+            <td class="small fw-semibold">{{ p.mencion }}</td>
+            <td class="text-end">
+              {% if current_user.rol == 'tesorera' or current_user.rol == 'admin' %}
+              <input type="number" class="form-control form-control-sm text-end input-ingreso"
+                     value="{{ '%.2f'|format(p.ingresos) }}"
+                     data-id="{{ p.id }}"
+                     data-original="{{ p.ingresos }}"
+                     step="0.01" min="0" style="width:130px;display:inline-block;">
+              {% else %}
+              <span class="monto">{{ p.ingresos | format_sol }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end monto" id="gastos-{{ p.id }}">{{ p.gastos_total | format_sol }}</td>
+            <td class="text-end monto" id="ocep-{{ p.id }}">{{ p.retencion_ocep | format_sol }}</td>
+            <td class="text-end monto" id="epg-{{ p.id }}">{{ p.retencion_epg | format_sol }}</td>
+            <td class="text-end fw-bold monto" id="saldo-{{ p.id }}">{{ p.saldo_actual | format_sol }}</td>
+            <td class="text-center" id="sit-{{ p.id }}">
+              <span class="badge-situacion {{ p.situacion|replace(' ','_')|lower }}">{{ p.situacion }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-dark">
+          <tr>
+            <td colspan="4" class="fw-bold text-end">TOTALES</td>
+            <td class="text-end fw-bold" id="total-ingresos">
+              {{ programas | sum(attribute='ingresos') | format_sol }}
+            </td>
+            <td class="text-end fw-bold" id="total-gastos">
+              {{ programas | sum(attribute='gastos_total') | format_sol }}
+            </td>
+            <td class="text-end fw-bold">
+              {{ programas | sum(attribute='retencion_ocep') | format_sol }}
+            </td>
+            <td class="text-end fw-bold">
+              {{ programas | sum(attribute='retencion_epg') | format_sol }}
+            </td>
+            <td class="text-end fw-bold" id="total-saldo">
+              {{ programas | sum(attribute='saldo_actual') | format_sol }}
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.input-ingreso').forEach(input => {
+  let timer;
+  input.addEventListener('change', function() {
+    clearTimeout(timer);
+    const id = this.dataset.id;
+    const valor = parseFloat(this.value);
+    timer = setTimeout(() => {
+      fetch(`/tesorera/actualizar_ingreso/${id}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ingresos: valor})
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          document.getElementById(`gastos-${id}`).textContent = formatSol(data.gastos);
+          document.getElementById(`ocep-${id}`).textContent = formatSol(data.retencion_ocep);
+          document.getElementById(`epg-${id}`).textContent = formatSol(data.retencion_epg);
+          document.getElementById(`saldo-${id}`).textContent = formatSol(data.saldo);
+          const sitEl = document.getElementById(`sit-${id}`);
+          sitEl.innerHTML = `<span class="badge-situacion ${data.situacion.replace(/ /g,'_').toLowerCase()}">${data.situacion}</span>`;
+          input.classList.add('border-success');
+          setTimeout(() => input.classList.remove('border-success'), 2000);
+        }
+      })
+      .catch(err => console.error(err));
+    }, 600);
+  });
+});
+
+function formatSol(n) {
+  return 'S/ ' + Number(n).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+</script>
+{% endblock %}

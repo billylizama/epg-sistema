@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block title %}Registros de Gastos - Admin EPG{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="titulo-seccion">
+    <i class="bi bi-list-ul me-2"></i>Registros de Gastos
+    {% if pendientes_docente > 0 %}
+    <span class="badge bg-warning text-dark ms-2">{{ pendientes_docente }} pendientes</span>
+    {% endif %}
+  </h4>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.registros', docente_invitado=1) }}"
+       class="btn btn-warning btn-sm {% if filtros.docente_invitado %}active{% endif %}">
+      <i class="bi bi-person-check me-1"></i>Docente Invitado Pendientes
+    </a>
+    <a href="{{ url_for('operador.exportar_registros') }}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+    </a>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow-sm mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-2">
+        <select name="mes" class="form-select form-select-sm">
+          <option value="">Todos los meses</option>
+          {% for m in meses %}
+          <option value="{{ m }}" {% if filtros.mes == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-1">
+        <input type="number" name="anio" class="form-control form-control-sm"
+               placeholder="Año" value="{{ filtros.anio }}">
+      </div>
+      <div class="col-md-3">
+        <select name="facultad" class="form-select form-select-sm">
+          <option value="">Todas las facultades</option>
+          {% for f in facultades %}
+          <option value="{{ f }}" {% if filtros.facultad == f %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="descripcion" class="form-select form-select-sm">
+          <option value="">Todas las descripciones</option>
+          {% for d in descripciones %}
+          <option value="{{ d }}" {% if filtros.descripcion == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="condicion" class="form-select form-select-sm">
+          <option value="">Todas las condiciones</option>
+          <option value="EN PROCESO" {% if filtros.condicion == 'EN PROCESO' %}selected{% endif %}>EN PROCESO</option>
+          <option value="REALIZADO" {% if filtros.condicion == 'REALIZADO' %}selected{% endif %}>REALIZADO</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <select name="estado" class="form-select form-select-sm">
+          <option value="">Estado</option>
+          <option value="APROBADO" {% if filtros.estado == 'APROBADO' %}selected{% endif %}>APROBADO</option>
+          <option value="SIN SALDO" {% if filtros.estado == 'SIN SALDO' %}selected{% endif %}>SIN SALDO</option>
+        </select>
+      </div>
+      <div class="col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-epg btn-sm"><i class="bi bi-search"></i></button>
+        <a href="{{ url_for('admin.registros') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="thead-epg">
+          <tr>
+            <th>#</th>
+            <th>Mes/Año</th>
+            <th>Facultad</th>
+            <th>Mencion</th>
+            <th>Expediente</th>
+            <th>Oficio</th>
+            <th>Descripcion</th>
+            <th class="text-end">Monto</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center" style="min-width:140px;">Condicion</th>
+            <th>Observación</th>
+            <th>Fecha</th>
+            <th class="text-center">Eliminar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in registros.items %}
+          <tr>
+            <td class="text-muted small">{{ r.id }}</td>
+            <td class="small">{{ r.mes }}<br><span class="text-muted">{{ r.anio }}</span></td>
+            <td class="small">{{ r.facultad }}</td>
+            <td class="small">{{ r.mencion }}</td>
+            <td class="small fw-semibold">{{ r.expediente }}</td>
+            <td class="small">{{ r.oficio or '-' }}</td>
+            <td class="small">
+              {% if r.descripcion == 'PLANILLA DOCENTE INVITADO' %}
+              <span class="text-warning fw-bold"><i class="bi bi-star-fill me-1"></i>{{ r.descripcion }}</span>
+              {% else %}
+              {{ r.descripcion }}
+              {% endif %}
+            </td>
+            <td class="text-end fw-bold small">S/ {{ '%.2f'|format(r.monto) }}</td>
+            <td class="text-center">
+              <span class="badge-estado {{ r.estado|replace(' ','_')|lower }}">{{ r.estado }}</span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button"
+                        class="btn btn-condicion {% if r.condicion == 'EN PROCESO' %}btn-warning active{% else %}btn-outline-warning{% endif %}"
+                        onclick="cambiarCondicion({{ r.id }}, 'EN PROCESO', this)">
+                  EN PROCESO
+                </button>
+                <button type="button"
+                        class="btn btn-condicion {% if r.condicion == 'REALIZADO' %}btn-success active{% else %}btn-outline-success{% endif %}"
+                        onclick="cambiarCondicion({{ r.id }}, 'REALIZADO', this)">
+                  REALIZADO
+                </button>
+              </div>
+            </td>
+            <td class="small text-muted">{{ r.observacion or '-' }}</td>
+            <td class="small text-muted">{{ r.fecha_registro.strftime('%d/%m/%Y') if r.fecha_registro else '-' }}</td>
+            <td class="text-center">
+              <form method="POST" action="{{ url_for('admin.eliminar_registro', reg_id=r.id) }}"
+                    onsubmit="return confirm('¿Eliminar este registro?\n\nExp: {{ r.expediente }}\n{{ r.descripcion }} - S/ {{ '%.2f'|format(r.monto) }}\n\nEsta accion no se puede deshacer.');">
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="13" class="text-center text-muted py-4">No se encontraron registros.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Paginacion -->
+{% if registros.pages > 1 %}
+<nav class="mt-3">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% if registros.has_prev %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('admin.registros', page=registros.prev_num, **filtros) }}">Anterior</a>
+    </li>
+    {% endif %}
+    {% for p in registros.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+      {% if p %}
+      <li class="page-item {% if p == registros.page %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('admin.registros', page=p, **filtros) }}">{{ p }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    {% if registros.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('admin.registros', page=registros.next_num, **filtros) }}">Siguiente</a>
+    </li>
+    {% endif %}
+  </ul>
+  <p class="text-center text-muted small">
+    Mostrando {{ registros.items|length }} de {{ registros.total }} registros
+  </p>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function cambiarCondicion(regId, condicion, btn) {
+  fetch(`/admin/actualizar_condicion/${regId}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({condicion: condicion})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      const group = btn.closest('.btn-group');
+      group.querySelectorAll('.btn-condicion').forEach(b => {
+        b.classList.remove('active');
+        if (b.textContent.trim() === 'EN PROCESO') {
+          b.className = 'btn btn-condicion btn-outline-warning';
+        } else {
+          b.className = 'btn btn-condicion btn-outline-success';
+        }
+      });
+      btn.classList.add('active');
+      if (condicion === 'EN PROCESO') {
+        btn.className = 'btn btn-condicion btn-warning active';
+      } else {
+        btn.className = 'btn btn-condicion btn-success active';
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sistema EPG{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<nav class="navbar navbar-expand-lg navbar-epg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">
+      <i class="bi bi-mortarboard-fill me-2"></i>Sistema EPG
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav me-auto">
+        {% if current_user.rol == 'tesorera' %}
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'tesorera.presupuesto' %}active{% endif %}"
+             href="{{ url_for('tesorera.presupuesto') }}">
+            <i class="bi bi-table me-1"></i>Presupuesto
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'analytics.dashboard' %}active{% endif %}"
+             href="{{ url_for('analytics.dashboard') }}">
+            <i class="bi bi-bar-chart-fill me-1"></i>Graficos
+          </a>
+        </li>
+        {% elif current_user.rol == 'operador' %}
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'operador.registro' %}active{% endif %}"
+             href="{{ url_for('operador.registro') }}">
+            <i class="bi bi-plus-circle me-1"></i>Nuevo Gasto
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'operador.lista' %}active{% endif %}"
+             href="{{ url_for('operador.lista') }}">
+            <i class="bi bi-list-ul me-1"></i>Lista de Gastos
+          </a>
+        </li>
+        {% elif current_user.rol == 'admin' %}
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
+             href="{{ url_for('admin.dashboard') }}">
+            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'admin.registros' %}active{% endif %}"
+             href="{{ url_for('admin.registros') }}">
+            <i class="bi bi-list-ul me-1"></i>Registros
+            {% if pendientes_docente_nav and pendientes_docente_nav > 0 %}
+            <span class="badge bg-warning text-dark ms-1">{{ pendientes_docente_nav }}</span>
+            {% endif %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'tesorera.presupuesto' %}active{% endif %}"
+             href="{{ url_for('tesorera.presupuesto') }}">
+            <i class="bi bi-table me-1"></i>Presupuesto
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'analytics.dashboard' %}active{% endif %}"
+             href="{{ url_for('analytics.dashboard') }}">
+            <i class="bi bi-bar-chart-fill me-1"></i>Graficos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'admin.usuarios' %}active{% endif %}"
+             href="{{ url_for('admin.usuarios') }}">
+            <i class="bi bi-people me-1"></i>Usuarios
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+
+      <ul class="navbar-nav ms-auto align-items-center">
+        <!-- CAMPANA NOTIFICACIONES -->
+        <li class="nav-item dropdown me-2" id="notifDropdown">
+          <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" id="btnNotif"
+             onclick="cargarNotificaciones()">
+            <i class="bi bi-bell-fill" style="font-size:1.1rem;"></i>
+            <span id="notifBadge"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style="font-size:.55rem;{% if not notif_count or notif_count == 0 %}display:none{% endif %}">
+              {{ notif_count or '' }}
+            </span>
+          </a>
+          <div class="dropdown-menu dropdown-menu-end p-0" style="min-width:340px;max-height:420px;overflow-y:auto;" id="notifMenu">
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+              <span class="fw-bold small">Notificaciones</span>
+              <button class="btn btn-link btn-sm p-0 text-muted text-decoration-none"
+                      onclick="marcarTodas()">Marcar todas como leidas</button>
+            </div>
+            <div id="notifLista">
+              <div class="text-center text-muted py-3 small">Cargando...</div>
+            </div>
+          </div>
+        </li>
+
+        <!-- USUARIO -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle me-1"></i>{{ current_user.nombre_completo }}
+            <span class="badge-rol ms-1">{{ current_user.rol|upper }}</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+              <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesion
+            </a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+{% endif %}
+
+<div class="container-fluid py-4 {% if not current_user.is_authenticated %}d-flex align-items-center justify-content-center min-vh-100{% endif %}">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="row mb-3">
+        <div class="col-12">
+          {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<!-- SISTEMA DE NOTIFICACIONES -->
+<script>
+function cargarNotificaciones() {
+  fetch('/api/notificaciones')
+    .then(r => r.json())
+    .then(notifs => {
+      const lista = document.getElementById('notifLista');
+      if (!lista) return;
+      if (!notifs.length) {
+        lista.innerHTML = '<div class="text-center text-muted py-3 small"><i class="bi bi-check-circle me-1"></i>Sin notificaciones pendientes</div>';
+        return;
+      }
+      lista.innerHTML = notifs.map(n => `
+        <div class="notif-item px-3 py-2 border-bottom" id="notif-${n.id}" style="cursor:pointer;"
+             onclick="leerNotif(${n.id})">
+          <div class="d-flex justify-content-between">
+            <span class="badge-notif ${n.tipo.toLowerCase()} me-2">${n.tipo}</span>
+            <small class="text-muted">${n.fecha}</small>
+          </div>
+          <div class="small fw-semibold mt-1">${n.titulo}</div>
+          <div class="text-muted" style="font-size:.72rem;">${n.mensaje}</div>
+        </div>`).join('');
+    });
+}
+
+function leerNotif(id) {
+  fetch(`/api/notificaciones/marcar_leida/${id}`, {method:'POST'})
+    .then(() => {
+      const el = document.getElementById(`notif-${id}`);
+      if (el) el.style.opacity = '.4';
+      actualizarBadge(-1);
+    });
+}
+
+function marcarTodas() {
+  fetch('/api/notificaciones/marcar_todas', {method:'POST'})
+    .then(() => {
+      cargarNotificaciones();
+      const badge = document.getElementById('notifBadge');
+      if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
+    });
+}
+
+function actualizarBadge(delta) {
+  const badge = document.getElementById('notifBadge');
+  if (!badge) return;
+  let v = parseInt(badge.textContent || '0') + delta;
+  if (v <= 0) { badge.style.display = 'none'; badge.textContent = ''; }
+  else { badge.style.display = ''; badge.textContent = v; }
+}
+
+// Polling notificaciones cada 60 segundos
+setInterval(() => {
+  fetch('/api/notificaciones')
+    .then(r => r.json())
+    .then(notifs => {
+      const badge = document.getElementById('notifBadge');
+      if (!badge) return;
+      if (notifs.length > 0) {
+        badge.style.display = '';
+        badge.textContent = notifs.length;
+      } else {
+        badge.style.display = 'none';
+      }
+    });
+}, 60000);
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

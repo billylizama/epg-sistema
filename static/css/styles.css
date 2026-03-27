@@ -1,0 +1,254 @@
+/* ============================================================
+   SISTEMA EPG — Tema Claro / Paleta Guinda
+   ============================================================ */
+
+:root {
+  --guinda:        #6B1A2A;
+  --guinda-hover:  #541422;
+  --guinda-light:  #8B2340;
+  --guinda-pale:   #F5E8EC;
+  --guinda-border: #D4A0AD;
+
+  --bg-page:  #F4F1F2;
+  --bg-card:  #FFFFFF;
+  --bg-thead: #6B1A2A;
+
+  --txt-main:  #2C1015;
+  --txt-muted: #7A5060;
+  --txt-white: #FFFFFF;
+
+  --bien-bg:        #D6EFDA;
+  --bien-txt:       #1A5C26;
+  --critico-bg:     #FFF3CD;
+  --critico-txt:    #7A5000;
+  --sobrepasado-bg: #FAD7DC;
+  --sobrepasado-txt:#7A0A18;
+  --enproceso-bg:   #FFF3CD;
+  --enproceso-txt:  #7A5000;
+  --realizado-bg:   #D6EFDA;
+  --realizado-txt:  #1A5C26;
+}
+
+/* ── Base ── */
+body {
+  font-family: 'Segoe UI', Inter, Arial, sans-serif;
+  background: var(--bg-page);
+  color: var(--txt-main);
+  font-size: .875rem;
+}
+
+/* ── Navbar ── */
+.navbar-epg {
+  background: var(--guinda) !important;
+  box-shadow: 0 2px 10px rgba(107,26,42,.25);
+}
+.navbar-epg .navbar-brand,
+.navbar-epg .nav-link { color: rgba(255,255,255,.92) !important; }
+.navbar-epg .nav-link:hover,
+.navbar-epg .nav-link.active {
+  color: #fff !important;
+  background: rgba(255,255,255,.14);
+  border-radius: 6px;
+}
+.navbar-epg .navbar-toggler { border-color: rgba(255,255,255,.35); }
+
+.badge-rol {
+  background: rgba(255,255,255,.18);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: .68rem;
+  font-weight: 600;
+}
+
+/* ── Login ── */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 14px;
+  box-shadow: 0 8px 36px rgba(107,26,42,.18);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.login-header {
+  background: var(--guinda);
+  color: #fff;
+  text-align: center;
+  padding: 2rem 1.5rem 1.5rem;
+}
+
+/* ── Botones ── */
+.btn-epg {
+  background: var(--guinda);
+  border-color: var(--guinda);
+  color: #fff;
+}
+.btn-epg:hover, .btn-epg:focus {
+  background: var(--guinda-hover);
+  border-color: var(--guinda-hover);
+  color: #fff;
+}
+
+/* ── Tabla ── */
+.thead-epg th {
+  background: var(--bg-thead) !important;
+  color: #fff;
+  font-weight: 600;
+  font-size: .76rem;
+  letter-spacing: .3px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.table > :not(caption) > * > * { vertical-align: middle; }
+.table-hover > tbody > tr:hover > * { background: var(--guinda-pale); }
+
+/* ── Tarjeta general ── */
+.card {
+  border: 1px solid #EAE0E3;
+  border-radius: 10px;
+}
+.card-header { background: #F9F3F5; border-bottom: 1px solid #EAE0E3; }
+
+/* ── Titulo seccion ── */
+.titulo-seccion {
+  color: var(--guinda);
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+/* ── Badge situacion ── */
+.badge-situacion {
+  padding: 3px 9px; border-radius: 5px;
+  font-size: .7rem; font-weight: 700;
+  display: inline-block; white-space: nowrap;
+}
+.badge-situacion.bien          { background: var(--bien-bg);        color: var(--bien-txt); }
+.badge-situacion.critico       { background: var(--critico-bg);     color: var(--critico-txt); }
+.badge-situacion.en_el_limite  { background: var(--critico-bg);     color: var(--critico-txt); }
+.badge-situacion.sobrepasado   { background: var(--sobrepasado-bg); color: var(--sobrepasado-txt); }
+
+/* ── Badge estado gasto ── */
+.badge-estado {
+  padding: 3px 8px; border-radius: 5px;
+  font-size: .7rem; font-weight: 700;
+  display: inline-block;
+}
+.badge-estado.aprobado  { background: var(--bien-bg);        color: var(--bien-txt); }
+.badge-estado.sin_saldo { background: var(--sobrepasado-bg); color: var(--sobrepasado-txt); }
+
+/* ── Badge condicion ── */
+.badge-condicion {
+  padding: 3px 8px; border-radius: 5px;
+  font-size: .7rem; font-weight: 700;
+  display: inline-block;
+}
+.badge-condicion.en_proceso { background: var(--enproceso-bg); color: var(--enproceso-txt); }
+.badge-condicion.realizado  { background: var(--realizado-bg); color: var(--realizado-txt); }
+
+/* ── Badge tipo programa ── */
+.badge-tipo {
+  padding: 2px 7px; border-radius: 4px;
+  font-size: .68rem; font-weight: 700;
+}
+.badge-tipo.maestria  { background: #EAF0FB; color: #1E3A8A; }
+.badge-tipo.doctorado { background: #F0EAFB; color: #5B1F9C; }
+.badge-tipo.epg       { background: var(--guinda-pale); color: var(--guinda); }
+
+/* ── Badge rol tabla usuarios ── */
+.badge-rol-tabla {
+  padding: 2px 9px; border-radius: 4px;
+  font-size: .7rem; font-weight: 700;
+}
+.badge-rol-tabla.tesorera { background: #FCE4EC; color: #880E4F; }
+.badge-rol-tabla.operador { background: #E3F2FD; color: #0D47A1; }
+.badge-rol-tabla.admin    { background: var(--guinda-pale); color: var(--guinda); }
+
+/* ── Input ingreso (tesorera) ── */
+.input-ingreso {
+  border: 1px solid #D0BAC0;
+  background: #FDF8F9;
+  transition: border-color .25s, box-shadow .25s;
+}
+.input-ingreso:focus {
+  border-color: var(--guinda);
+  box-shadow: 0 0 0 .2rem rgba(107,26,42,.12);
+  background: #fff;
+}
+.input-ingreso.border-success {
+  border-color: #22c55e !important;
+}
+
+/* ── Indicador saldo tiempo real ── */
+.badge-estado-grande {
+  display: inline-block;
+  padding: 10px 32px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.badge-estado-grande.aprobado {
+  background: var(--bien-bg);
+  color: var(--bien-txt);
+  border: 2px solid var(--bien-txt);
+}
+.badge-estado-grande.sin-saldo {
+  background: var(--sobrepasado-bg);
+  color: var(--sobrepasado-txt);
+  border: 2px solid var(--sobrepasado-txt);
+}
+
+/* ── Tarjetas resumen dashboard ── */
+.tarjeta-resumen {
+  border-left: 4px solid transparent;
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+.ingreso-card  { border-left-color: #22c55e; }
+.gasto-card    { border-left-color: #ef4444; }
+.ret-card      { border-left-color: #f59e0b; }
+.saldo-pos     { border-left-color: #22c55e; }
+.saldo-cero    { border-left-color: #f59e0b; }
+.saldo-neg     { border-left-color: #ef4444; }
+
+/* ── Botones condicion (admin) ── */
+.btn-condicion { font-size: .7rem; padding: 2px 7px; }
+
+/* ── Notificaciones dropdown ── */
+.notif-item { transition: background .15s; }
+.notif-item:hover { background: var(--guinda-pale); }
+
+.badge-notif {
+  padding: 2px 7px; border-radius: 4px;
+  font-size: .67rem; font-weight: 700;
+  display: inline-block;
+}
+.badge-notif.sobrepasado { background: var(--sobrepasado-bg); color: var(--sobrepasado-txt); }
+.badge-notif.critico     { background: var(--critico-bg);     color: var(--critico-txt); }
+
+/* ── Paginacion ── */
+.page-item.active .page-link {
+  background: var(--guinda);
+  border-color: var(--guinda);
+}
+.page-link { color: var(--guinda); }
+.page-link:hover { color: var(--guinda-hover); background: var(--guinda-pale); }
+
+/* ── Alert personalizado ── */
+.alert-info { background: #EAF4FB; border-color: #B6D9F0; color: #0A4F7A; }
+
+/* ── Form controls ── */
+.form-control:focus, .form-select:focus {
+  border-color: var(--guinda-border);
+  box-shadow: 0 0 0 .2rem rgba(107,26,42,.1);
+}
+
+/* ── Modal header guinda ── */
+.modal-header[style*="960000"],
+.modal-header[style*="#960000"] {
+  background: var(--guinda) !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .titulo-seccion { font-size: 1rem; }
+}
