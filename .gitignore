@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Entorno virtual
+venv/
+env/
+.venv/
+
+# Base de datos
+*.db
+*.sqlite3
+database/
+
+# Backups
+backups/
+
+# Logs
+*.log
+server.log
+
+# Variables de entorno
+.env
+.env.local
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Archivos de importación temporal
+*.xlsx
+*.xls
