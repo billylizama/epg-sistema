@@ -85,6 +85,7 @@
             <th class="text-center">Condicion</th>
             <th>Observación</th>
             <th>Fecha</th>
+            <th class="text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -106,9 +107,29 @@
             </td>
             <td class="small text-muted">{{ r.observacion or '-' }}</td>
             <td class="small text-muted">{{ r.fecha_registro.strftime('%d/%m/%Y') if r.fecha_registro else '-' }}</td>
+            <td class="text-center">
+              <div class="d-flex gap-1 justify-content-center">
+                <button class="btn btn-sm btn-outline-warning btn-editar"
+                        data-id="{{ r.id }}" data-mes="{{ r.mes }}" data-anio="{{ r.anio }}"
+                        data-facultad="{{ r.facultad }}" data-mencion="{{ r.mencion }}"
+                        data-expediente="{{ r.expediente }}" data-oficio="{{ r.oficio or '' }}"
+                        data-descripcion="{{ r.descripcion }}" data-monto="{{ r.monto }}"
+                        data-estado="{{ r.estado }}" data-condicion="{{ r.condicion }}"
+                        data-observacion="{{ r.observacion or '' }}"
+                        title="Editar" data-bs-toggle="modal" data-bs-target="#modalEditar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="POST" action="{{ url_for('operador.eliminar_registro', reg_id=r.id) }}"
+                      onsubmit="return confirm('¿Eliminar este registro?\n{{ r.descripcion }} - S/ {{ '%.2f'|format(r.monto) }}\n\nEsta accion no se puede deshacer.');">
+                  <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
           </tr>
           {% else %}
-          <tr><td colspan="12" class="text-center text-muted py-4">No se encontraron registros.</td></tr>
+          <tr><td colspan="13" class="text-center text-muted py-4">No se encontraron registros.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -145,4 +166,102 @@
   </p>
 </nav>
 {% endif %}
+
+<!-- Modal Editar -->
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" style="background:#6B1A2A;color:white;">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Registro</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="formEditar" action="">
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Mes</label>
+              <select name="mes" id="edit_mes" class="form-select form-select-sm" required>
+                {% for m in meses %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold">Año</label>
+              <input type="number" name="anio" id="edit_anio" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label fw-semibold">Facultad</label>
+              <input type="text" name="facultad" id="edit_facultad" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Mencion</label>
+              <input type="text" name="mencion" id="edit_mencion" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Expediente</label>
+              <input type="text" name="expediente" id="edit_expediente" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Oficio</label>
+              <input type="text" name="oficio" id="edit_oficio" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Monto</label>
+              <input type="number" step="0.01" name="monto" id="edit_monto" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Descripcion</label>
+              <select name="descripcion" id="edit_descripcion" class="form-select form-select-sm">
+                {% for d in descripciones %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Estado</label>
+              <select name="estado" id="edit_estado" class="form-select form-select-sm">
+                <option value="APROBADO">APROBADO</option>
+                <option value="SIN SALDO">SIN SALDO</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Condicion</label>
+              <select name="condicion" id="edit_condicion" class="form-select form-select-sm">
+                <option value="EN PROCESO">EN PROCESO</option>
+                <option value="REALIZADO">REALIZADO</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observacion</label>
+              <input type="text" name="observacion" id="edit_observacion" class="form-control form-control-sm">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-epg">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.btn-editar').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const d = this.dataset;
+    document.getElementById('formEditar').action = `/operador/editar/${d.id}`;
+    document.getElementById('edit_mes').value = d.mes;
+    document.getElementById('edit_anio').value = d.anio;
+    document.getElementById('edit_facultad').value = d.facultad;
+    document.getElementById('edit_mencion').value = d.mencion;
+    document.getElementById('edit_expediente').value = d.expediente;
+    document.getElementById('edit_oficio').value = d.oficio;
+    document.getElementById('edit_descripcion').value = d.descripcion;
+    document.getElementById('edit_monto').value = d.monto;
+    document.getElementById('edit_estado').value = d.estado;
+    document.getElementById('edit_condicion').value = d.condicion;
+    document.getElementById('edit_observacion').value = d.observacion;
+  });
+});
+</script>
 {% endblock %}

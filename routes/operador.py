@@ -163,6 +163,38 @@ def lista():
                            })
 
 
+@operador.route('/operador/editar/<int:reg_id>', methods=['POST'])
+@login_required
+@rol_requerido('operador', 'admin')
+def editar_registro(reg_id):
+    reg = RegistroGasto.query.get_or_404(reg_id)
+    reg.mes         = request.form.get('mes', reg.mes).upper()
+    reg.anio        = int(request.form.get('anio', reg.anio))
+    reg.facultad    = request.form.get('facultad', reg.facultad)
+    reg.mencion     = request.form.get('mencion', reg.mencion)
+    reg.expediente  = request.form.get('expediente', '').strip() or 'S/N'
+    reg.oficio      = request.form.get('oficio', '').strip()
+    reg.descripcion = request.form.get('descripcion', reg.descripcion).upper()
+    reg.monto       = float(request.form.get('monto', reg.monto))
+    reg.estado      = request.form.get('estado', reg.estado).upper()
+    reg.condicion   = request.form.get('condicion', reg.condicion).upper()
+    reg.observacion = request.form.get('observacion', '').strip()
+    db.session.commit()
+    flash('Registro actualizado correctamente.', 'success')
+    return redirect(request.referrer or url_for('operador.lista'))
+
+
+@operador.route('/operador/eliminar/<int:reg_id>', methods=['POST'])
+@login_required
+@rol_requerido('operador', 'admin')
+def eliminar_registro(reg_id):
+    reg = RegistroGasto.query.get_or_404(reg_id)
+    db.session.delete(reg)
+    db.session.commit()
+    flash('Registro eliminado correctamente.', 'success')
+    return redirect(request.referrer or url_for('operador.lista'))
+
+
 @operador.route('/operador/exportar_registros')
 @login_required
 @rol_requerido('operador', 'admin')
