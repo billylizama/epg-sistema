@@ -105,7 +105,7 @@ def exportar():
     numero = 1
 
     # ── Fila EPG primero ──────────────────────────────────────────────
-    epg = Programa.query.filter_by(es_epg=True).first()
+    epg = Programa.query.filter_by(mencion='ESCUELA DE POST GRADO').first()
     if epg:
         mencion_epg = f'{epg.mencion} - DERECHO DE TRÁMITES ACADÉMICOS'
         datos_epg = [numero, epg.tipo_programa, epg.facultad, mencion_epg,
@@ -153,7 +153,7 @@ def exportar():
         current_row += 1
 
     # ── Demás programas ───────────────────────────────────────────────
-    otros = Programa.query.filter_by(es_epg=False).order_by(
+    otros = Programa.query.filter(Programa.mencion != 'ESCUELA DE POST GRADO').order_by(
         Programa.facultad, Programa.tipo_programa, Programa.mencion).all()
 
     for p in otros:
