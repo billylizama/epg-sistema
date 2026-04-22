@@ -10,10 +10,10 @@ from flask import redirect, url_for, flash
 analytics = Blueprint('analytics', __name__)
 
 
-def admin_o_tesorera(f):
+def admin_tesorera_operador(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if current_user.rol not in ('admin', 'tesorera'):
+        if current_user.rol not in ('admin', 'tesorera', 'operador'):
             flash('Acceso no permitido.', 'danger')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
@@ -22,7 +22,7 @@ def admin_o_tesorera(f):
 
 @analytics.route('/analytics')
 @login_required
-@admin_o_tesorera
+@admin_tesorera_operador
 def dashboard():
     return render_template('analytics/dashboard.html')
 

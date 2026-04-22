@@ -4,6 +4,7 @@ from functools import wraps
 from extensions import db
 from models.programa import Programa
 from models.registro_gasto import RegistroGasto
+from models.historial_edicion import HistorialEdicion
 from datetime import datetime
 import io
 
@@ -126,7 +127,9 @@ def lista():
     # Filtros
     f_mes = request.args.get('mes', '')
     f_facultad = request.args.get('facultad', '')
-    f_mencion = request.args.get('mencion', '')
+    f_mencion = request.args.get('mencion', '').strip()
+    f_expediente = request.args.get('expediente', '').strip()
+    f_oficio = request.args.get('oficio', '').strip()
     f_descripcion = request.args.get('descripcion', '')
     f_estado = request.args.get('estado', '')
     f_condicion = request.args.get('condicion', '')
@@ -138,6 +141,10 @@ def lista():
         query = query.filter(RegistroGasto.facultad == f_facultad)
     if f_mencion:
         query = query.filter(RegistroGasto.mencion.contains(f_mencion))
+    if f_expediente:
+        query = query.filter(RegistroGasto.expediente.contains(f_expediente))
+    if f_oficio:
+        query = query.filter(RegistroGasto.oficio.contains(f_oficio))
     if f_descripcion:
         query = query.filter(RegistroGasto.descripcion == f_descripcion)
     if f_estado:
@@ -147,20 +154,80 @@ def lista():
     if f_anio:
         query = query.filter(RegistroGasto.anio == int(f_anio))
 
+    total_monto = query.with_entities(db.func.sum(RegistroGasto.monto)).scalar() or 0.0
+    total_registros = query.count()
+
     registros = query.order_by(RegistroGasto.fecha_registro.desc()).paginate(
         page=page, per_page=per_page, error_out=False)
 
     facultades = db.session.query(Programa.facultad).distinct().order_by(Programa.facultad).all()
+
+    # Opciones por facultad para los datalists de busqueda
+    menciones_data = {}
+    for p in Programa.query.order_by(Programa.facultad, Programa.mencion).all():
+        menciones_data.setdefault(p.facultad, []).append(p.mencion)
+
+    expedientes_data, oficios_data = {}, {}
+    rows = db.session.query(
+        RegistroGasto.facultad, RegistroGasto.expediente, RegistroGasto.oficio
+    ).distinct().all()
+    for fac, exp, ofi in rows:
+        if exp:
+            expedientes_data.setdefault(fac, set()).add(exp)
+        if ofi:
+            oficios_data.setdefault(fac, set()).add(ofi)
+    expedientes_data = {k: sorted(v) for k, v in expedientes_data.items()}
+    oficios_data = {k: sorted(v) for k, v in oficios_data.items()}
+
     return render_template('operador/lista.html',
                            registros=registros,
+                           total_monto=total_monto,
+                           total_registros=total_registros,
                            facultades=[f[0] for f in facultades],
                            meses=MESES,
                            descripciones=DESCRIPCIONES,
+                           menciones_data=menciones_data,
+                           expedientes_data=expedientes_data,
+                           oficios_data=oficios_data,
                            filtros={
                                'mes': f_mes, 'facultad': f_facultad,
-                               'mencion': f_mencion, 'descripcion': f_descripcion,
+                               'mencion': f_mencion, 'expediente': f_expediente,
+                               'oficio': f_oficio, 'descripcion': f_descripcion,
                                'estado': f_estado, 'condicion': f_condicion, 'anio': f_anio
                            })
+
+
+CAMPOS_EDITABLES = ['mes', 'anio', 'facultad', 'mencion', 'expediente', 'oficio',
+                    'descripcion', 'estado', 'condicion', 'observacion']
+
+
+def _aplicar_edicion(reg, form, user, rol):
+    """Actualiza campos de reg desde form (excluye monto) y registra historial."""
+    cambios = []
+    for campo in CAMPOS_EDITABLES:
+        if campo not in form:
+            continue
+        nuevo = form.get(campo, '').strip()
+        if campo == 'anio':
+            nuevo_val = int(nuevo) if nuevo else reg.anio
+        elif campo in ('mes', 'descripcion', 'estado', 'condicion'):
+            nuevo_val = nuevo.upper() if nuevo else getattr(reg, campo)
+        elif campo == 'expediente':
+            nuevo_val = nuevo or 'S/N'
+        else:
+            nuevo_val = nuevo
+        anterior = getattr(reg, campo)
+        if (anterior or '') != (nuevo_val or ''):
+            cambios.append((campo, anterior, nuevo_val))
+            setattr(reg, campo, nuevo_val)
+    for campo, ant, nue in cambios:
+        db.session.add(HistorialEdicion(
+            registro_id=reg.id, editado_por=user, rol=rol,
+            campo=campo, valor_anterior=str(ant) if ant is not None else '',
+            valor_nuevo=str(nue) if nue is not None else '',
+            expediente=reg.expediente
+        ))
+    return len(cambios)
 
 
 @operador.route('/operador/editar/<int:reg_id>', methods=['POST'])
@@ -168,19 +235,12 @@ def lista():
 @rol_requerido('operador', 'admin')
 def editar_registro(reg_id):
     reg = RegistroGasto.query.get_or_404(reg_id)
-    reg.mes         = request.form.get('mes', reg.mes).upper()
-    reg.anio        = int(request.form.get('anio', reg.anio))
-    reg.facultad    = request.form.get('facultad', reg.facultad)
-    reg.mencion     = request.form.get('mencion', reg.mencion)
-    reg.expediente  = request.form.get('expediente', '').strip() or 'S/N'
-    reg.oficio      = request.form.get('oficio', '').strip()
-    reg.descripcion = request.form.get('descripcion', reg.descripcion).upper()
-    reg.monto       = float(request.form.get('monto', reg.monto))
-    reg.estado      = request.form.get('estado', reg.estado).upper()
-    reg.condicion   = request.form.get('condicion', reg.condicion).upper()
-    reg.observacion = request.form.get('observacion', '').strip()
+    if reg.condicion == 'REALIZADO':
+        flash('No se puede editar un registro en condicion REALIZADO.', 'danger')
+        return redirect(request.referrer or url_for('operador.lista'))
+    n = _aplicar_edicion(reg, request.form, current_user.username, current_user.rol)
     db.session.commit()
-    flash('Registro actualizado correctamente.', 'success')
+    flash(f'Registro actualizado ({n} cambio(s)).' if n else 'Sin cambios.', 'success' if n else 'info')
     return redirect(request.referrer or url_for('operador.lista'))
 
 
@@ -189,9 +249,10 @@ def editar_registro(reg_id):
 @rol_requerido('operador', 'admin')
 def eliminar_registro(reg_id):
     reg = RegistroGasto.query.get_or_404(reg_id)
+    info = f'Exp. {reg.expediente} - {reg.descripcion} - S/ {reg.monto:,.2f}'
     db.session.delete(reg)
     db.session.commit()
-    flash('Registro eliminado correctamente.', 'success')
+    flash(f'Registro eliminado: {info}', 'success')
     return redirect(request.referrer or url_for('operador.lista'))
 
 

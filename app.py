@@ -55,6 +55,7 @@ def create_app():
     os.makedirs(Config.BACKUP_DIR, exist_ok=True)
 
     with app.app_context():
+        import models  # registra todas las tablas antes de create_all
         db.create_all()
 
     _setup_backup(app)

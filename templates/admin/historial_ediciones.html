@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Ediciones - Admin EPG{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="titulo-seccion"><i class="bi bi-clock-history me-2"></i>Historial de Ediciones</h4>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <input type="text" name="usuario" class="form-control form-control-sm"
+               placeholder="Filtrar por usuario" value="{{ filtros.usuario }}">
+      </div>
+      <div class="col-md-3">
+        <input type="text" name="expediente" class="form-control form-control-sm"
+               placeholder="Filtrar por expediente" value="{{ filtros.expediente }}">
+      </div>
+      <div class="col-md-2 d-flex gap-1">
+        <button type="submit" class="btn btn-epg btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
+        <a href="{{ url_for('admin.historial_ediciones') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i></a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="thead-epg">
+          <tr>
+            <th>#</th>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Registro</th>
+            <th>Expediente</th>
+            <th>Campo</th>
+            <th>Valor anterior</th>
+            <th>Valor nuevo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in ediciones.items %}
+          <tr>
+            <td class="text-muted small">{{ e.id }}</td>
+            <td class="small">{{ e.fecha.strftime('%d/%m/%Y %H:%M') if e.fecha else '-' }}</td>
+            <td class="small fw-semibold">{{ e.editado_por }}</td>
+            <td class="small"><span class="badge bg-secondary">{{ e.rol }}</span></td>
+            <td class="small">#{{ e.registro_id }}</td>
+            <td class="small">{{ e.expediente or '-' }}</td>
+            <td class="small fw-bold">{{ e.campo }}</td>
+            <td class="small text-danger"><del>{{ e.valor_anterior or '(vacio)' }}</del></td>
+            <td class="small text-success">{{ e.valor_nuevo or '(vacio)' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="text-center text-muted py-4">No hay ediciones registradas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if ediciones.pages > 1 %}
+<nav class="mt-3">
+  <ul class="pagination pagination-sm justify-content-center">
+    {% if ediciones.has_prev %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('admin.historial_ediciones', page=ediciones.prev_num, **filtros) }}">Anterior</a>
+    </li>
+    {% endif %}
+    {% for p in ediciones.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+      {% if p %}
+      <li class="page-item {% if p == ediciones.page %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('admin.historial_ediciones', page=p, **filtros) }}">{{ p }}</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    {% if ediciones.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('admin.historial_ediciones', page=ediciones.next_num, **filtros) }}">Siguiente</a>
+    </li>
+    {% endif %}
+  </ul>
+  <p class="text-center text-muted small">
+    Mostrando {{ ediciones.items|length }} de {{ ediciones.total }} ediciones
+  </p>
+</nav>
+{% endif %}
+{% endblock %}

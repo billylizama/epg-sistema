@@ -46,6 +46,12 @@
             <i class="bi bi-list-ul me-1"></i>Lista de Gastos
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'analytics.dashboard' %}active{% endif %}"
+             href="{{ url_for('analytics.dashboard') }}">
+            <i class="bi bi-bar-chart-fill me-1"></i>Graficos
+          </a>
+        </li>
         {% elif current_user.rol == 'admin' %}
         <li class="nav-item">
           <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
@@ -78,6 +84,12 @@
           <a class="nav-link {% if request.endpoint == 'admin.usuarios' %}active{% endif %}"
              href="{{ url_for('admin.usuarios') }}">
             <i class="bi bi-people me-1"></i>Usuarios
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'admin.historial_ediciones' %}active{% endif %}"
+             href="{{ url_for('admin.historial_ediciones') }}">
+            <i class="bi bi-clock-history me-1"></i>Historial
           </a>
         </li>
         {% endif %}

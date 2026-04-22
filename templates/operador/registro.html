@@ -109,11 +109,6 @@
                 <div class="text-center mt-3">
                   <div id="estadoIndicador" class="badge-estado-grande">--</div>
                 </div>
-                <div class="text-center mt-3">
-                  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="imprimirResumen()">
-                    <i class="bi bi-printer me-1"></i>Imprimir
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -215,90 +210,6 @@ inputMonto.addEventListener('input', actualizarSaldo);
 
 function formatSol(n) {
   return 'S/ ' + Number(n).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-
-function imprimirResumen() {
-  // Recoger valores del formulario
-  const mes       = document.querySelector('select[name="mes"]').value || '-';
-  const anio      = document.querySelector('input[name="anio"]').value || '-';
-  const expediente= document.getElementById('expediente').value || '-';
-  const facultad  = document.getElementById('selFacultad').value || '-';
-  const mencion   = document.getElementById('selMencion').value || '-';
-  const oficio    = document.querySelector('input[name="oficio"]').value || '-';
-  const descripcion= document.querySelector('select[name="descripcion"]').value || '-';
-  const monto     = document.querySelector('input[name="monto"]').value || '-';
-  const observacion= document.querySelector('input[name="observacion"]').value || '-';
-
-  // Datos de saldo
-  const ingresos  = document.getElementById('rt-ingresos').textContent;
-  const gastos    = document.getElementById('rt-gastos').textContent;
-  const ret       = document.getElementById('rt-ret').textContent;
-  const saldo     = document.getElementById('rt-saldo').textContent;
-  const estadoEl  = document.getElementById('estadoIndicador');
-  const estado    = estadoEl.textContent;
-  const esAprobado= estadoEl.classList.contains('aprobado');
-
-  const ventana = window.open('', '_blank', 'width=700,height=600');
-  ventana.document.write(`<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Registro de Gasto - EPG</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; font-size: 13px; color: #222; padding: 20px; }
-    h2 { font-size: 16px; margin-bottom: 4px; }
-    .subtitulo { font-size: 12px; color: #666; margin-bottom: 16px; }
-    .seccion { margin-bottom: 16px; }
-    .grilla { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .campo label { font-size: 11px; color: #888; display: block; margin-bottom: 2px; }
-    .campo span { font-weight: bold; font-size: 13px; }
-    .campo.ancho { grid-column: span 2; }
-    hr { border: none; border-top: 1px solid #ddd; margin: 14px 0; }
-    .saldo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-    .saldo-item { text-align: center; background: #f5f5f5; padding: 8px; border-radius: 6px; }
-    .saldo-item small { font-size: 10px; color: #888; display: block; }
-    .saldo-item strong { font-size: 13px; }
-    .estado { text-align: center; padding: 10px; border-radius: 8px; font-size: 16px; font-weight: bold; }
-    .aprobado { background: #d4edda; color: #155724; }
-    .sin-saldo { background: #f8d7da; color: #721c24; }
-    @media print {
-      body { padding: 10px; }
-    }
-  </style>
-</head>
-<body>
-  <h2>Registro de Gasto - EPG</h2>
-  <p class="subtitulo">Sistema de Planillas EPG &mdash; Impreso el ${new Date().toLocaleDateString('es-PE', {day:'2-digit',month:'long',year:'numeric'})}</p>
-  <hr>
-  <div class="seccion">
-    <div class="grilla">
-      <div class="campo"><label>Mes</label><span>${mes}</span></div>
-      <div class="campo"><label>A&ntilde;o</label><span>${anio}</span></div>
-      <div class="campo"><label>Expediente</label><span>${expediente}</span></div>
-      <div class="campo ancho"><label>Facultad</label><span>${facultad}</span></div>
-      <div class="campo"></div>
-      <div class="campo ancho"><label>Menci&oacute;n</label><span>${mencion}</span></div>
-      <div class="campo"></div>
-      <div class="campo"><label>Oficio</label><span>${oficio}</span></div>
-      <div class="campo ancho"><label>Descripci&oacute;n</label><span>${descripcion}</span></div>
-      <div class="campo"><label>Monto (S/)</label><span>${monto}</span></div>
-      <div class="campo ancho"><label>Observaci&oacute;n</label><span>${observacion}</span></div>
-    </div>
-  </div>
-  <hr>
-  <p style="font-size:12px;font-weight:600;margin-bottom:8px;">Saldo en Tiempo Real</p>
-  <div class="saldo-grid">
-    <div class="saldo-item"><small>Ingresos</small><strong>${ingresos}</strong></div>
-    <div class="saldo-item"><small>Gastos</small><strong>${gastos}</strong></div>
-    <div class="saldo-item"><small>Retenciones</small><strong>${ret}</strong></div>
-    <div class="saldo-item"><small>Saldo Disp.</small><strong>${saldo}</strong></div>
-  </div>
-  <div class="estado ${esAprobado ? 'aprobado' : 'sin-saldo'}">${estado}</div>
-  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }<\/script>
-</body>
-</html>`);
-  ventana.document.close();
 }
 
 // Bloquear envio si sin saldo
