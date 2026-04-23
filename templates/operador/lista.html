@@ -175,6 +175,7 @@
             <th class="text-center">Condicion</th>
             <th>Registrado por</th>
             <th>Fecha</th>
+            <th>Observacion</th>
             <th class="text-center">Acciones</th>
           </tr>
         </thead>
@@ -197,6 +198,7 @@
             </td>
             <td class="small">{{ r.registrado_por }}</td>
             <td class="small text-muted">{{ r.fecha_registro.strftime('%d/%m/%Y') if r.fecha_registro else '-' }}</td>
+            <td class="small" title="{{ r.observacion or '' }}" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.observacion or '-' }}</td>
             <td class="text-center">
               <div class="d-flex gap-1 justify-content-center">
                 {% if r.condicion != 'REALIZADO' %}
@@ -233,14 +235,14 @@
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="13" class="text-center text-muted py-4">No se encontraron registros.</td></tr>
+          <tr><td colspan="14" class="text-center text-muted py-4">No se encontraron registros.</td></tr>
           {% endfor %}
         </tbody>
         <tfoot>
           <tr class="table-active fw-bold">
             <td colspan="7" class="text-end">TOTAL ({{ total_registros }} registro{{ 's' if total_registros != 1 else '' }}):</td>
             <td class="text-end">S/ {{ '{:,.2f}'.format(total_monto) }}</td>
-            <td colspan="5"></td>
+            <td colspan="6"></td>
           </tr>
         </tfoot>
       </table>
