@@ -14,7 +14,8 @@ MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
          'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']
 
 DESCRIPCIONES = ['HONORARIOS', 'SUBVENCION', 'PLANILLA DIRECTORIO', 'PLANILLA DE SUSTENTACION',
-                 'PLANILLA DOCENTE INVITADO', 'PLANILLA DOCENTE NOMBRADO', 'OTROS']
+                 'PLANILLA DOCENTE INVITADO', 'PLANILLA DOCENTE NOMBRADO',
+                 'POR CONTRATAR DOCENTE', 'OTROS']
 
 
 def rol_requerido(*roles):
@@ -44,33 +45,44 @@ def registro():
         expediente = request.form.get('expediente', '').strip() or 'S/N'
         oficio = request.form.get('oficio', '').strip()
         descripcion = request.form.get('descripcion')
-        monto = float(request.form.get('monto', 0))
         observacion = request.form.get('observacion', '').strip()
 
-        # Verificar expediente duplicado
-        dup = RegistroGasto.query.filter_by(expediente=expediente).first()
-        if dup:
-            flash(f'Advertencia: el expediente {expediente} ya existe en el registro #{dup.id}.', 'warning')
+        es_por_contratar = descripcion == 'POR CONTRATAR DOCENTE'
+        monto = 0.0 if es_por_contratar else float(request.form.get('monto', 0) or 0)
 
-        # Calcular saldo disponible
-        prog = Programa.query.filter_by(mencion=mencion).first()
-        if not prog:
-            flash('Mencion no encontrada.', 'danger')
-            return redirect(url_for('operador.registro'))
+        # Validar duplicado solo cuando expediente y oficio esten ambos llenos
+        if expediente and expediente != 'S/N' and oficio:
+            dup = RegistroGasto.query.filter_by(expediente=expediente, oficio=oficio).first()
+            if dup:
+                flash(
+                    f'No se puede registrar: ya existe el registro #{dup.id} con el mismo expediente y oficio. '
+                    f'Buscalo en la primera columna (#) de la lista. '
+                    f'Detalle: {dup.mes} {dup.anio} - {dup.facultad} - {dup.mencion} - '
+                    f'{dup.descripcion} - S/ {dup.monto:,.2f}.',
+                    'danger'
+                )
+                return redirect(url_for('operador.registro'))
 
-        saldo_disp = prog.saldo_actual
-
-        if saldo_disp >= monto:
+        if es_por_contratar:
             estado = 'APROBADO'
+            condicion = 'POR CONTRATAR'
         else:
-            flash('Sin saldo disponible. El registro no puede guardarse.', 'danger')
-            return redirect(url_for('operador.registro'))
+            prog = Programa.query.filter_by(mencion=mencion).first()
+            if not prog:
+                flash('Mencion no encontrada.', 'danger')
+                return redirect(url_for('operador.registro'))
+            if prog.saldo_actual >= monto:
+                estado = 'APROBADO'
+            else:
+                flash('Sin saldo disponible. El registro no puede guardarse.', 'danger')
+                return redirect(url_for('operador.registro'))
+            condicion = 'EN PROCESO'
 
         reg = RegistroGasto(
             mes=mes, anio=anio, facultad=facultad, mencion=mencion,
             expediente=expediente, oficio=oficio, descripcion=descripcion,
             monto=monto, estado=estado, observacion=observacion,
-            condicion='EN PROCESO', registrado_por=current_user.username
+            condicion=condicion, registrado_por=current_user.username
         )
         db.session.add(reg)
         db.session.commit()
@@ -113,6 +125,29 @@ def menciones_por_facultad():
     facultad = request.args.get('facultad', '')
     programas = Programa.query.filter_by(facultad=facultad).order_by(Programa.mencion).all()
     return jsonify([{'mencion': p.mencion} for p in programas])
+
+
+@operador.route('/operador/verificar_duplicado')
+@login_required
+@rol_requerido('operador', 'admin')
+def verificar_duplicado():
+    expediente = request.args.get('expediente', '').strip()
+    oficio = request.args.get('oficio', '').strip()
+    if not expediente or expediente == 'S/N' or not oficio:
+        return jsonify({'duplicado': False})
+    dup = RegistroGasto.query.filter_by(expediente=expediente, oficio=oficio).first()
+    if not dup:
+        return jsonify({'duplicado': False})
+    return jsonify({
+        'duplicado': True,
+        'id': dup.id,
+        'mes': dup.mes,
+        'anio': dup.anio,
+        'facultad': dup.facultad,
+        'mencion': dup.mencion,
+        'descripcion': dup.descripcion,
+        'monto': dup.monto,
+    })
 
 
 @operador.route('/operador/lista')
@@ -230,6 +265,34 @@ def _aplicar_edicion(reg, form, user, rol):
     return len(cambios)
 
 
+def _aplicar_transicion_por_contratar(reg, form, user, rol):
+    """Si el registro es POR CONTRATAR DOCENTE y se cambia a otra descripcion,
+    valida monto y saldo. Devuelve (error_msg, forzar_en_proceso)."""
+    if reg.descripcion != 'POR CONTRATAR DOCENTE':
+        return None, False
+    nueva_desc = (form.get('descripcion') or '').strip().upper()
+    if not nueva_desc or nueva_desc == 'POR CONTRATAR DOCENTE':
+        return None, False
+    form_monto = (form.get('monto') or '').strip()
+    try:
+        nuevo_monto = float(form_monto)
+    except ValueError:
+        nuevo_monto = 0.0
+    if nuevo_monto <= 0:
+        return 'Al cambiar la descripcion debes ingresar el monto real (mayor a 0).', False
+    prog = Programa.query.filter_by(mencion=reg.mencion).first()
+    if not prog or prog.saldo_actual < nuevo_monto:
+        return 'Sin saldo disponible para activar este registro con el monto indicado.', False
+    if reg.monto != nuevo_monto:
+        db.session.add(HistorialEdicion(
+            registro_id=reg.id, editado_por=user, rol=rol,
+            campo='monto', valor_anterior=str(reg.monto), valor_nuevo=str(nuevo_monto),
+            expediente=reg.expediente
+        ))
+        reg.monto = nuevo_monto
+    return None, True
+
+
 @operador.route('/operador/editar/<int:reg_id>', methods=['POST'])
 @login_required
 @rol_requerido('operador', 'admin')
@@ -238,7 +301,14 @@ def editar_registro(reg_id):
     if reg.condicion == 'REALIZADO':
         flash('No se puede editar un registro en condicion REALIZADO.', 'danger')
         return redirect(request.referrer or url_for('operador.lista'))
+    error, forzar_en_proceso = _aplicar_transicion_por_contratar(
+        reg, request.form, current_user.username, current_user.rol)
+    if error:
+        flash(error, 'danger')
+        return redirect(request.referrer or url_for('operador.lista'))
     n = _aplicar_edicion(reg, request.form, current_user.username, current_user.rol)
+    if forzar_en_proceso and reg.condicion in ('POR CONTRATAR', ''):
+        reg.condicion = 'EN PROCESO'
     db.session.commit()
     flash(f'Registro actualizado ({n} cambio(s)).' if n else 'Sin cambios.', 'success' if n else 'info')
     return redirect(request.referrer or url_for('operador.lista'))

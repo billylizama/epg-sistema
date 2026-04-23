@@ -16,7 +16,8 @@ MESES = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
          'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']
 
 DESCRIPCIONES = ['HONORARIOS', 'SUBVENCION', 'PLANILLA DIRECTORIO', 'PLANILLA DE SUSTENTACION',
-                 'PLANILLA DOCENTE INVITADO', 'PLANILLA DOCENTE NOMBRADO', 'OTROS']
+                 'PLANILLA DOCENTE INVITADO', 'PLANILLA DOCENTE NOMBRADO',
+                 'POR CONTRATAR DOCENTE', 'OTROS']
 
 
 def admin_requerido(f):
@@ -226,12 +227,19 @@ def cambiar_password(user_id):
 @login_required
 @admin_requerido
 def editar_registro(reg_id):
-    from routes.operador import _aplicar_edicion
+    from routes.operador import _aplicar_edicion, _aplicar_transicion_por_contratar
     reg = RegistroGasto.query.get_or_404(reg_id)
     if reg.condicion == 'REALIZADO':
         flash('No se puede editar un registro en condicion REALIZADO.', 'danger')
         return redirect(request.referrer or url_for('admin.registros'))
+    error, forzar_en_proceso = _aplicar_transicion_por_contratar(
+        reg, request.form, current_user.username, current_user.rol)
+    if error:
+        flash(error, 'danger')
+        return redirect(request.referrer or url_for('admin.registros'))
     n = _aplicar_edicion(reg, request.form, current_user.username, current_user.rol)
+    if forzar_en_proceso and reg.condicion in ('POR CONTRATAR', ''):
+        reg.condicion = 'EN PROCESO'
     db.session.commit()
     flash(f'Registro actualizado ({n} cambio(s)).' if n else 'Sin cambios.', 'success' if n else 'info')
     return redirect(request.referrer or url_for('admin.registros'))

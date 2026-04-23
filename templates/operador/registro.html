@@ -33,6 +33,7 @@
               <input type="text" name="expediente" class="form-control"
                      placeholder="Ej: 3-1021-26-9 (opcional)"
                      id="expediente" pattern="[\d\w\-\/ ]*">
+              <div id="avisoDuplicado" class="text-danger small mt-1" style="display:none;"></div>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Facultad <span class="text-danger">*</span></label>
@@ -51,19 +52,22 @@
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Oficio</label>
-              <input type="text" name="oficio" class="form-control" placeholder="Ej: OF-123">
+              <input type="text" name="oficio" class="form-control" id="oficio" placeholder="Ej: OF-123">
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Descripcion <span class="text-danger">*</span></label>
-              <select name="descripcion" class="form-select" required>
+              <select name="descripcion" id="selDescripcion" class="form-select" required>
                 <option value="">-- Seleccionar --</option>
                 {% for d in descripciones %}
                 <option value="{{ d }}">{{ d }}</option>
                 {% endfor %}
               </select>
+              <div id="avisoPorContratar" class="text-warning small mt-1" style="display:none;">
+                <i class="bi bi-info-circle me-1"></i>El monto quedara en 0 hasta que lleguen los documentos oficiales.
+              </div>
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-semibold">Monto (S/) <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">Monto (S/) <span class="text-danger" id="montoReqMark">*</span></label>
               <input type="number" name="monto" class="form-control" id="inputMonto"
                      placeholder="0.00" step="0.01" min="0.01" required>
             </div>
@@ -148,9 +152,21 @@
 <script>
 const selFacultad = document.getElementById('selFacultad');
 const selMencion = document.getElementById('selMencion');
+const selDescripcion = document.getElementById('selDescripcion');
 const inputMonto = document.getElementById('inputMonto');
+const inputExpediente = document.getElementById('expediente');
+const inputOficio = document.getElementById('oficio');
 const indicador = document.getElementById('indicadorSaldo');
 const btnGuardar = document.getElementById('btnGuardar');
+const avisoPorContratar = document.getElementById('avisoPorContratar');
+const avisoDuplicado = document.getElementById('avisoDuplicado');
+const montoReqMark = document.getElementById('montoReqMark');
+
+let hayDuplicado = false;
+
+function esPorContratar() {
+  return selDescripcion.value === 'POR CONTRATAR DOCENTE';
+}
 
 selFacultad.addEventListener('change', function() {
   const fac = this.value;
@@ -174,7 +190,36 @@ selFacultad.addEventListener('change', function() {
     });
 });
 
+function aplicarModoPorContratar() {
+  inputMonto.value = '0.00';
+  inputMonto.setAttribute('readonly', 'readonly');
+  inputMonto.removeAttribute('required');
+  inputMonto.setAttribute('min', '0');
+  inputMonto.classList.add('bg-light');
+  montoReqMark.style.display = 'none';
+  avisoPorContratar.style.display = 'block';
+  indicador.style.display = 'none';
+  btnGuardar.disabled = hayDuplicado;
+}
+
+function quitarModoPorContratar() {
+  inputMonto.removeAttribute('readonly');
+  inputMonto.setAttribute('required', 'required');
+  inputMonto.setAttribute('min', '0.01');
+  inputMonto.classList.remove('bg-light');
+  montoReqMark.style.display = '';
+  avisoPorContratar.style.display = 'none';
+  if (parseFloat(inputMonto.value) === 0) inputMonto.value = '';
+  actualizarSaldo();
+}
+
+selDescripcion.addEventListener('change', () => {
+  if (esPorContratar()) aplicarModoPorContratar();
+  else quitarModoPorContratar();
+});
+
 function actualizarSaldo() {
+  if (esPorContratar()) { btnGuardar.disabled = hayDuplicado; return; }
   const mencion = selMencion.value;
   const monto = parseFloat(inputMonto.value) || 0;
   if (!mencion || monto <= 0) {
@@ -196,7 +241,7 @@ function actualizarSaldo() {
       if (data.aprobado) {
         el.className = 'badge-estado-grande aprobado';
         el.textContent = '✔ APROBADO';
-        btnGuardar.disabled = false;
+        btnGuardar.disabled = hayDuplicado;
       } else {
         el.className = 'badge-estado-grande sin-saldo';
         el.textContent = '✘ SIN SALDO';
@@ -212,8 +257,56 @@ function formatSol(n) {
   return 'S/ ' + Number(n).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
-// Bloquear envio si sin saldo
+// --- Verificacion de duplicados (expediente + oficio) ---
+let dupTimer = null;
+function verificarDuplicado() {
+  const exp = inputExpediente.value.trim();
+  const ofi = inputOficio.value.trim();
+  if (!exp || !ofi) {
+    hayDuplicado = false;
+    avisoDuplicado.style.display = 'none';
+    if (esPorContratar()) btnGuardar.disabled = false;
+    else actualizarSaldo();
+    return;
+  }
+  fetch(`/operador/verificar_duplicado?expediente=${encodeURIComponent(exp)}&oficio=${encodeURIComponent(ofi)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.duplicado) {
+        hayDuplicado = true;
+        avisoDuplicado.innerHTML =
+          `<i class="bi bi-exclamation-triangle-fill me-1"></i>` +
+          `Ya existe el registro <strong>#${data.id}</strong> con este expediente y oficio. ` +
+          `Buscalo en la columna <strong>#</strong> de la lista. ` +
+          `Detalle: ${data.mes} ${data.anio} - ${data.facultad} - ${data.mencion} - ` +
+          `${data.descripcion} - ${formatSol(data.monto)}.`;
+        avisoDuplicado.style.display = 'block';
+        btnGuardar.disabled = true;
+      } else {
+        hayDuplicado = false;
+        avisoDuplicado.style.display = 'none';
+        if (esPorContratar()) btnGuardar.disabled = false;
+        else actualizarSaldo();
+      }
+    });
+}
+
+function programarVerificacion() {
+  clearTimeout(dupTimer);
+  dupTimer = setTimeout(verificarDuplicado, 400);
+}
+inputExpediente.addEventListener('input', programarVerificacion);
+inputOficio.addEventListener('input', programarVerificacion);
+inputExpediente.addEventListener('blur', verificarDuplicado);
+inputOficio.addEventListener('blur', verificarDuplicado);
+
+// Bloquear envio si hay problemas
 document.getElementById('formRegistro').addEventListener('submit', function(e) {
+  if (hayDuplicado) {
+    e.preventDefault();
+    alert('No puedes registrar: ya existe un registro con el mismo expediente y oficio.');
+    return;
+  }
   if (btnGuardar.disabled) {
     e.preventDefault();
     alert('No hay saldo disponible para este registro.');

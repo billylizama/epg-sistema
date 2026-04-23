@@ -143,6 +143,7 @@ body {
 }
 .badge-condicion.en_proceso { background: var(--enproceso-bg); color: var(--enproceso-txt); }
 .badge-condicion.realizado  { background: var(--realizado-bg); color: var(--realizado-txt); }
+.badge-condicion.por_contratar { background: #E4D8F2; color: #4B2770; }
 
 /* ── Badge tipo programa ── */
 .badge-tipo {

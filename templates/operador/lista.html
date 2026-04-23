@@ -57,6 +57,7 @@
           <option value="">Condicion</option>
           <option value="EN PROCESO" {% if filtros.condicion == 'EN PROCESO' %}selected{% endif %}>EN PROCESO</option>
           <option value="REALIZADO" {% if filtros.condicion == 'REALIZADO' %}selected{% endif %}>REALIZADO</option>
+          <option value="POR CONTRATAR" {% if filtros.condicion == 'POR CONTRATAR' %}selected{% endif %}>POR CONTRATAR</option>
         </select>
       </div>
       <div class="col-md-4">
@@ -287,8 +288,11 @@
       </div>
       <form method="POST" id="formEditar" action="">
         <div class="modal-body">
-          <div class="alert alert-info small py-2 mb-3">
+          <div class="alert alert-info small py-2 mb-3" id="edit_info_normal">
             <i class="bi bi-info-circle me-1"></i>El <strong>monto</strong> no es editable. Para cambiarlo, elimina el registro y crea uno nuevo.
+          </div>
+          <div class="alert alert-warning small py-2 mb-3" id="edit_info_por_contratar" style="display:none;">
+            <i class="bi bi-info-circle me-1"></i>Este registro es <strong>POR CONTRATAR DOCENTE</strong>. Para activarlo, cambia la descripcion a la real e ingresa el monto.
           </div>
           <div class="row g-2">
             <div class="col-md-4">
@@ -302,8 +306,8 @@
               <input type="number" name="anio" id="edit_anio" class="form-control form-control-sm" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small mb-1">Monto (no editable)</label>
-              <input type="text" id="edit_monto" class="form-control form-control-sm" disabled>
+              <label class="form-label small mb-1" id="edit_monto_label">Monto (no editable)</label>
+              <input type="number" step="0.01" min="0" name="monto" id="edit_monto" class="form-control form-control-sm" disabled>
             </div>
             <div class="col-md-12">
               <label class="form-label small mb-1">Facultad</label>
@@ -339,6 +343,7 @@
               <select name="condicion" id="edit_condicion" class="form-select form-select-sm">
                 <option value="EN PROCESO">EN PROCESO</option>
                 <option value="REALIZADO">REALIZADO</option>
+                <option value="POR CONTRATAR">POR CONTRATAR</option>
               </select>
             </div>
             <div class="col-md-12">
@@ -357,6 +362,40 @@
 </div>
 
 <script>
+function configurarMontoEditar(desc) {
+  const monto = document.getElementById('edit_monto');
+  const label = document.getElementById('edit_monto_label');
+  const infoNorm = document.getElementById('edit_info_normal');
+  const infoPC = document.getElementById('edit_info_por_contratar');
+  if (desc === 'POR CONTRATAR DOCENTE') {
+    monto.disabled = true;
+    monto.removeAttribute('required');
+    label.textContent = 'Monto (S/) - editable si cambias la descripcion';
+    infoNorm.style.display = 'none';
+    infoPC.style.display = 'block';
+  } else {
+    monto.disabled = true;
+    label.textContent = 'Monto (no editable)';
+    infoNorm.style.display = 'block';
+    infoPC.style.display = 'none';
+  }
+}
+
+let descOriginalEditar = '';
+
+document.getElementById('edit_descripcion').addEventListener('change', function() {
+  const monto = document.getElementById('edit_monto');
+  if (descOriginalEditar === 'POR CONTRATAR DOCENTE' && this.value !== 'POR CONTRATAR DOCENTE') {
+    // Transicion: permitir editar monto
+    monto.disabled = false;
+    monto.setAttribute('required', 'required');
+    monto.focus();
+  } else if (descOriginalEditar === 'POR CONTRATAR DOCENTE' && this.value === 'POR CONTRATAR DOCENTE') {
+    monto.disabled = true;
+    monto.removeAttribute('required');
+  }
+});
+
 document.querySelectorAll('.btn-editar').forEach(btn => {
   btn.addEventListener('click', () => {
     const d = btn.dataset;
@@ -368,10 +407,12 @@ document.querySelectorAll('.btn-editar').forEach(btn => {
     document.getElementById('edit_expediente').value = d.expediente;
     document.getElementById('edit_oficio').value = d.oficio;
     document.getElementById('edit_descripcion').value = d.descripcion;
-    document.getElementById('edit_monto').value = 'S/ ' + d.monto;
+    document.getElementById('edit_monto').value = d.monto;
     document.getElementById('edit_estado').value = d.estado;
     document.getElementById('edit_condicion').value = d.condicion;
     document.getElementById('edit_observacion').value = d.observacion;
+    descOriginalEditar = d.descripcion;
+    configurarMontoEditar(d.descripcion);
   });
 });
 </script>
