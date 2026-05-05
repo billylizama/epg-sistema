@@ -37,20 +37,7 @@ def api_kpis():
     ments = request.args.getlist('men')
 
     programas = _filtrar(tipo, facs, ments)
-
-    total_ing  = sum(p.ingresos for p in programas)
-    total_gas  = sum(p.gastos_total for p in programas)
-    total_ocep = sum(p.retencion_ocep for p in programas)
-    total_epg  = sum(p.retencion_epg for p in programas)
-    total_sal  = sum(p.saldo_actual for p in programas)
-
-    return jsonify({
-        'ingresos': total_ing,
-        'gastos': total_gas,
-        'ret_ocep': total_ocep,
-        'ret_epg': total_epg,
-        'saldo': total_sal,
-    })
+    return jsonify(_totales(programas))
 
 
 @analytics.route('/api/analytics/treemap_facultad')
@@ -63,9 +50,14 @@ def api_treemap_facultad():
 
     facultades = {}
     for p in programas:
+        # EPG no es una facultad: solo se incluye cuando el usuario navega especificamente a EPG
+        if p.es_epg and tipo != 'EPG':
+            continue
         if p.facultad not in facultades:
             facultades[p.facultad] = {'ingresos': 0, 'gastos': 0, 'saldo': 0}
-        facultades[p.facultad]['ingresos'] += p.ingresos
+        # Para EPG (en su vista propia): mostrar el ingreso efectivo (lo que recauda de los demas)
+        ingreso_visible = p.retencion_epg if p.es_epg else p.ingresos
+        facultades[p.facultad]['ingresos'] += ingreso_visible
         facultades[p.facultad]['gastos']   += p.gastos_total
         facultades[p.facultad]['saldo']    += p.saldo_actual
 
@@ -89,16 +81,11 @@ def api_top10():
     ments = request.args.getlist('men')
     programas = _filtrar(tipo, facs, ments)
 
-    top = sorted(programas, key=lambda p: p.ingresos, reverse=True)[:10]
+    top = sorted(programas, key=lambda p: p.ingresos, reverse=True)
     result = []
     for p in top:
-        # Abreviar nombre para el grafico
-        nombre = p.mencion
-        if ' - ' in nombre:
-            partes = nombre.split(' - ')
-            nombre = partes[-1] if len(partes[-1]) < 30 else partes[0][:35]
         result.append({
-            'mencion': nombre,
+            'mencion': _short_name(p.mencion),
             'ingresos': round(p.ingresos, 2),
             'gastos': round(p.gastos_total, 2),
             'saldo': round(p.saldo_actual, 2),
@@ -138,11 +125,18 @@ def api_erosion():
     ments = request.args.getlist('men')
     programas = _filtrar(tipo, facs, ments)
 
-    ingresos  = sum(p.ingresos for p in programas)
-    ocep      = sum(p.retencion_ocep for p in programas)
-    epg       = sum(p.retencion_epg  for p in programas)
-    gastos    = sum(p.gastos_total   for p in programas)
-    saldo     = sum(p.saldo_actual   for p in programas)
+    t = _totales(programas)
+    ingresos = t['ingresos']
+    ocep     = t['ret_ocep']
+    epg      = t['ret_epg']
+    saldo    = t['saldo']
+
+    # Caso especial vista EPG: ingresos efectivos = propios + recaudacion;
+    # EPG no se cobra a si misma, asi que su "retencion" en la cascada es 0.
+    if len(programas) == 1 and programas[0].es_epg:
+        epg_prog = programas[0]
+        ingresos = epg_prog.ingresos + epg_prog.retencion_epg
+        epg = 0
 
     pct_ocep = round((ingresos - ocep) / ingresos * 100, 1) if ingresos else 0
     pct_epg  = round((ingresos - ocep - epg) / ingresos * 100, 1) if ingresos else 0
@@ -156,6 +150,7 @@ def api_erosion():
         'pct_epg':        pct_epg,
         'saldo_final':    round(saldo, 2),
         'pct_saldo':      pct_sal,
+        'omitir_epg':     (epg == 0),
     })
 
 
@@ -240,3 +235,51 @@ def _filtrar(tipo, facs, ments):
     if ments:
         q = q.filter(Programa.mencion.in_(ments))
     return q.all()
+
+
+def _short_name(mencion):
+    """Etiqueta corta para gráficos: usa el código (ej. PROMAGRO) si existe; si no, quita el prefijo."""
+    if mencion == 'ESCUELA DE POST GRADO':
+        return 'EPG'
+    if ' - ' in mencion:
+        ultimo = mencion.split(' - ')[-1].strip()
+        if len(ultimo) < 30:
+            return ultimo
+    PREFIJOS = (
+        'PROGRAMA DE MAESTRIA EN ',
+        'PROGRAMA DE DOCTORADO EN ',
+        'MAESTRIA EN ',
+        'DOCTORADO EN ',
+        'PROGRAMA DE ',
+    )
+    s = mencion
+    for pre in PREFIJOS:
+        if s.startswith(pre):
+            return s[len(pre):]
+    return s
+
+
+def _totales(programas):
+    """Totales consolidados.
+    Caso especial: si el subset es SOLO EPG, mostramos su vista operacional
+    (lo que recauda y su saldo real), no la consolidada que daria 0."""
+    t_ing  = sum(p.ingresos for p in programas)
+    t_gas  = sum(p.gastos_total for p in programas)
+    t_ocep = t_ing * 0.10
+
+    if len(programas) == 1 and programas[0].es_epg:
+        epg = programas[0]
+        t_epg = epg.retencion_epg
+        t_sal = epg.saldo_actual
+    else:
+        ing_epg = sum(p.ingresos for p in programas if p.es_epg)
+        t_epg = (t_ing - ing_epg) * 0.05
+        t_sal = t_ing - t_gas - t_ocep - t_epg
+
+    return {
+        'ingresos': round(t_ing, 2),
+        'gastos':   round(t_gas, 2),
+        'ret_ocep': round(t_ocep, 2),
+        'ret_epg':  round(t_epg, 2),
+        'saldo':    round(t_sal, 2),
+    }

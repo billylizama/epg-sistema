@@ -33,11 +33,11 @@ class Programa(db.Model):
 
     @property
     def retencion_epg(self):
-        # EPG especial: recauda el 5% de TODOS los programas (incluyendose)
+        # EPG especial: recauda el 5% de los DEMAS programas (no de sus propios ingresos)
         # Para los demas: pagan el 5% de sus propios ingresos a EPG
         if self.es_epg:
-            total = db.session.query(db.func.sum(Programa.ingresos)).scalar()
-            return (total or 0.0) * 0.05
+            total = db.session.query(db.func.sum(Programa.ingresos)).scalar() or 0.0
+            return (total - self.ingresos) * 0.05
         return self.ingresos * 0.05
 
     @property
@@ -52,18 +52,21 @@ class Programa(db.Model):
     @property
     def situacion(self):
         saldo = self.saldo_actual
-        # Base para calcular el 15%: para EPG usamos ingresos + ret_epg, para otros ingresos
-        base = (self.ingresos + self.retencion_epg) if self.es_epg else self.ingresos
-        if base == 0:
-            return 'EN EL LIMITE' if saldo == 0 else ('SOBREPASADO' if saldo < 0 else 'BIEN')
+        # Rangos absolutos por monto:
+        #   saldo < 0           → SOBREPASADO
+        #   saldo == 0          → EN EL LIMITE
+        #   1 <= saldo <= 3000  → CRITICO
+        #   3000 < saldo <= 7000 → EN OBSERVACION
+        #   saldo > 7000         → BIEN
         if saldo < 0:
             return 'SOBREPASADO'
-        elif saldo == 0:
+        if saldo == 0:
             return 'EN EL LIMITE'
-        elif saldo <= base * 0.15:
+        if saldo <= 3000:
             return 'CRITICO'
-        else:
-            return 'BIEN'
+        if saldo <= 7000:
+            return 'EN OBSERVACION'
+        return 'BIEN'
 
     def __repr__(self):
         return f'<Programa {self.mencion}>'

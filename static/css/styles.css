@@ -19,6 +19,9 @@
 
   --bien-bg:        #D6EFDA;
   --bien-txt:       #1A5C26;
+  --observacion-bg: #FED7AA;
+  --observacion-txt:#9A3412;
+  --observacion-br: #F97316;
   --critico-bg:     #FFF3CD;
   --critico-txt:    #7A5000;
   --sobrepasado-bg: #FAD7DC;
@@ -122,6 +125,7 @@ body {
   display: inline-block; white-space: nowrap;
 }
 .badge-situacion.bien          { background: var(--bien-bg);        color: var(--bien-txt); }
+.badge-situacion.en_observacion{ background: var(--observacion-bg); color: var(--observacion-txt); border: 1px solid var(--observacion-br); }
 .badge-situacion.critico       { background: var(--critico-bg);     color: var(--critico-txt); }
 .badge-situacion.en_el_limite  { background: var(--critico-bg);     color: var(--critico-txt); }
 .badge-situacion.sobrepasado   { background: var(--sobrepasado-bg); color: var(--sobrepasado-txt); }
@@ -223,8 +227,9 @@ body {
   font-size: .67rem; font-weight: 700;
   display: inline-block;
 }
-.badge-notif.sobrepasado { background: var(--sobrepasado-bg); color: var(--sobrepasado-txt); }
-.badge-notif.critico     { background: var(--critico-bg);     color: var(--critico-txt); }
+.badge-notif.sobrepasado    { background: var(--sobrepasado-bg); color: var(--sobrepasado-txt); }
+.badge-notif.critico        { background: var(--critico-bg);     color: var(--critico-txt); }
+.badge-notif.en_observacion { background: var(--observacion-bg); color: var(--observacion-txt); }
 
 /* ── Paginacion ── */
 .page-item.active .page-link {

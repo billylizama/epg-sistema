@@ -3,134 +3,375 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Analisis Presupuestal - EPG</title>
+  <title>Analisis Presupuestal - Escuela de Posgrado UNP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --g:        #6B1A2A;
-      --g2:       #8B2340;
-      --g3:       #A8485E;
-      --g-pale:   #F5E8EC;
-      --bg:       #F4F1F2;
+      --g-900:    #5A1828;
+      --g-800:    #6E1F30;
+      --g-700:    #8B2340;
+      --g-600:    #A23856;
+      --g-500:    #B85870;
+      --g-400:    #CC7B8E;
+      --g-300:    #DDA1AF;
+      --g-200:    #ECC5CF;
+      --g-100:    #F8E8EE;
+      --gold:     #D4B26A;
+      --gold-soft:#E8CB8E;
+      --bg:       #F7F8FB;
+      --bg2:      #EEF1F6;
       --card:     #FFFFFF;
-      --card2:    #FDF8F9;
-      --sidebar:  #3D0A14;
-      --kpibar:   #541422;
-      --border:   #E8D5DA;
-      --txt:      #2C1015;
-      --txt2:     #7A5060;
+      --border:   #E4E7EE;
+      --border-2: #EEF0F5;
+      --txt:      #1C1F2A;
+      --txt2:     #5A6175;
+      --txt3:     #8990A3;
+      --ok:       #16A34A;
+      --warn:     #D97706;
+      --bad:      #DC2626;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow:    0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+      --shadow-lg: 0 4px 12px rgba(15,23,42,.08), 0 2px 4px rgba(15,23,42,.04);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       width: 100%; height: 100%;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
       color: var(--txt);
       overflow: hidden;
+      font-feature-settings: "cv11", "ss01";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* ── HEADER ── */
+    /* ── HEADER INSTITUCIONAL ── */
     .header {
-      height: 44px;
-      background: var(--g);
+      height: 56px;
+      background: linear-gradient(135deg, #7E2640 0%, #9B3554 50%, #7E2640 100%);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px;
-      box-shadow: 0 2px 10px rgba(107,26,42,.3);
+      padding: 0 22px;
+      box-shadow: 0 2px 12px rgba(126,38,64,.25);
       flex-shrink: 0;
+      position: relative;
+      border-bottom: 2px solid var(--gold);
     }
-    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
     .header-logo {
-      width: 28px; height: 28px;
-      background: rgba(255,255,255,.2);
+      width: 48px; height: 48px;
+      background: #FFFFFF;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: .9rem;
+      overflow: hidden;
+      box-shadow: 0 0 0 2px var(--gold), 0 3px 8px rgba(0,0,0,.35);
+      flex-shrink: 0;
     }
-    .header-title { font-size: 13px; font-weight: 700; color: #fff; }
-    .header-center { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: .5px; }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .header-right .ts { font-size: .65rem; color: rgba(255,255,255,.75); }
-    .btn-back {
+    .header-logo img {
+      width: 92%; height: 92%;
+      object-fit: contain;
+      display: block;
+    }
+    .header-titles { display: flex; flex-direction: column; line-height: 1.15; }
+    .header-org   { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.72); letter-spacing: .8px; text-transform: uppercase; }
+    .header-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: .2px; }
+    .header-center {
+      font-size: 13px; font-weight: 600; color: rgba(255,255,255,.92);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 6px 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 4px;
+    }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .header-right .ts {
+      font-size: 11px; color: rgba(255,255,255,.7);
+      display: flex; align-items: center; gap: 5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .header-right .ts i { font-size: 12px; }
+    .btn-back, .btn-pdf {
       color: rgba(255,255,255,.85); font-size: 1.2rem;
-      text-decoration: none; transition: color .2s;
+      text-decoration: none; transition: all .2s;
+      width: 34px; height: 32px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.15);
     }
-    .btn-back:hover { color: #fff; }
+    .btn-back:hover, .btn-pdf:hover { color: #fff; background: rgba(255,255,255,.12); border-color: var(--gold); }
+    .btn-pdf {
+      gap: 6px;
+      padding: 0 12px;
+      width: auto;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      background: rgba(201,169,97,.15);
+      border-color: rgba(201,169,97,.4);
+      color: var(--gold-soft);
+    }
+    .btn-pdf:hover {
+      background: var(--gold);
+      color: var(--g-900);
+      border-color: var(--gold);
+      box-shadow: 0 2px 8px rgba(201,169,97,.4);
+    }
+    .btn-pdf i { font-size: 13px; }
+    .btn-pdf:disabled { opacity: .5; cursor: wait; }
+    .capturando .refresh-pill,
+    .capturando .footer { display: none !important; }
+    .capturing-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(74,16,32,.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px;
+      color: #fff;
+    }
+    .capturing-overlay.show { display: flex; }
+    .capturing-overlay .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(255,255,255,.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .capturing-overlay .msg {
+      font-size: 13px; font-weight: 600; letter-spacing: .5px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── KPI BAR ── */
     .kpi-bar {
-      height: 60px;
-      background: var(--kpibar);
+      height: 78px;
+      background: linear-gradient(180deg, #732239 0%, #5F1A2D 100%);
       display: flex;
-      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,.18);
     }
     .kpi-item {
       flex: 1; display: flex; align-items: center;
-      gap: 10px; padding: 0 16px;
-      border-right: 1px solid var(--border);
+      gap: 14px; padding: 0 22px;
+      position: relative;
       transition: background .2s;
     }
-    .kpi-item:last-child { border-right: none; }
-    .kpi-item:hover { background: rgba(255,255,255,.06); }
-    .kpi-icon { font-size: 1.6rem; opacity: .8; }
-    .kpi-lbl { font-size: .58rem; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .6px; }
-    .kpi-val { font-size: .95rem; font-weight: 700; color: #fff; }
-    .kpi-item.ing .kpi-icon  { color: #F4A8B5; }
-    .kpi-item.gas .kpi-icon  { color: #F4C2A1; }
+    .kpi-item:not(:last-child)::after {
+      content: ''; position: absolute; right: 0; top: 18%;
+      width: 1px; height: 64%;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,.14), transparent);
+    }
+    .kpi-item:hover { background: rgba(255,255,255,.04); }
+    .kpi-item::before {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+      opacity: .85;
+    }
+    .kpi-item.ing::before  { background: #F4A8B5; }
+    .kpi-item.gas::before  { background: #F4C2A1; }
+    .kpi-item.ocep::before { background: #F4E4A8; }
+    .kpi-item.epg::before  { background: #A8D4F4; }
+    .kpi-item.sal::before  { background: #A8F4C2; }
+    .kpi-icon {
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 8px;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .kpi-item.ing  .kpi-icon { color: #F4A8B5; }
+    .kpi-item.gas  .kpi-icon { color: #F4C2A1; }
     .kpi-item.ocep .kpi-icon { color: #F4E4A8; }
     .kpi-item.epg  .kpi-icon { color: #A8D4F4; }
     .kpi-item.sal  .kpi-icon { color: #A8F4C2; }
+    .kpi-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .kpi-lbl  {
+      font-size: .65rem; color: rgba(255,255,255,.55);
+      text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+    }
+    .kpi-val  {
+      font-size: 1.15rem; font-weight: 700; color: #fff;
+      letter-spacing: -.3px; font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
 
     /* ── BODY LAYOUT ── */
     .body-wrap {
       display: flex;
-      height: calc(100vh - 44px - 60px);
+      height: calc(100vh - 56px - 78px - 28px);
     }
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: 168px;
-      background: var(--sidebar);
+      width: 200px;
+      background: linear-gradient(180deg, #5F1A2D 0%, #4A1426 100%);
       display: flex; flex-direction: column;
-      border-right: 1px solid rgba(212,160,173,.2);
+      border-right: 1px solid rgba(0,0,0,.18);
       overflow-y: auto;
       flex-shrink: 0;
+      box-shadow: inset -1px 0 0 rgba(255,255,255,.05);
     }
     .nav-section-lbl {
-      padding: 10px 12px 3px;
-      font-size: .6rem; color: rgba(255,255,255,.35);
-      text-transform: uppercase; letter-spacing: .8px;
+      padding: 16px 16px 8px;
+      font-size: 10px; color: var(--gold);
+      text-transform: uppercase; letter-spacing: 1.6px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-section-lbl::before {
+      content: ''; width: 14px; height: 1px; background: var(--gold);
+      opacity: .55;
     }
     .nav-btn {
-      display: flex; align-items: center; gap: 7px;
-      padding: 9px 14px; color: rgba(255,255,255,.65); cursor: pointer;
-      font-size: .78rem;
+      display: flex; align-items: center; gap: 11px;
+      padding: 10px 16px;
+      color: rgba(255,255,255,.72); cursor: pointer;
+      font-size: 12.5px; font-weight: 500;
       border-left: 3px solid transparent;
-      transition: all .18s;
+      transition: all .18s ease;
       user-select: none;
+      position: relative;
     }
-    .nav-btn:hover { color: #fff; background: rgba(255,255,255,.07); }
-    .nav-btn.active { color: #fff; background: rgba(245,232,236,.12); border-left-color: #F4A8B5; }
-    .nav-btn i { width: 14px; font-size: .82rem; }
+    .nav-btn:hover {
+      color: #fff;
+      background: linear-gradient(90deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      padding-left: 18px;
+    }
+    .nav-btn.active {
+      color: #fff;
+      background: linear-gradient(90deg, rgba(201,169,97,.16) 0%, rgba(201,169,97,.02) 100%);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
+    .nav-btn.active::after {
+      content: ''; position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+      width: 5px; height: 5px; background: var(--gold);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(201,169,97,.7);
+    }
+    .nav-btn i { width: 16px; font-size: 14px; opacity: .9; }
 
-    /* filtros */
-    .filter-sep { border-top: 1px solid rgba(212,160,173,.15); margin: 8px 0; }
-    .filter-lbl { padding: 4px 12px; font-size: .6rem; color: #F4A8B5; font-weight: 700; text-transform: uppercase; }
-    .filter-group { padding: 2px 12px; font-size: .62rem; color: rgba(255,255,255,.4); margin-top: 4px; font-weight: 600; }
-    .filter-list { padding: 0 10px 4px; }
-    .filter-item { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-    .filter-item label { font-size: .65rem; color: rgba(255,255,255,.6); cursor: pointer; line-height: 1.3; }
-    .filter-item input[type=checkbox] { accent-color: #F4A8B5; width: 10px; height: 10px; cursor: pointer; flex-shrink: 0; }
-    .btn-clear {
-      margin: 6px 10px 8px;
-      width: calc(100% - 20px);
-      padding: 4px 0; font-size: .65rem;
-      background: transparent;
-      border: 1px solid rgba(212,160,173,.25); color: rgba(255,255,255,.45);
-      border-radius: 4px; cursor: pointer;
+    .filter-sep {
+      border-top: 1px solid rgba(201,169,97,.14);
+      margin: 14px 12px 4px;
     }
-    .btn-clear:hover { border-color: #F4A8B5; color: #fff; }
+    .filter-lbl {
+      padding: 10px 16px 6px;
+      font-size: 10px; color: var(--gold);
+      font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .filter-lbl i { font-size: 11px; }
+    .filter-count-pill {
+      margin-left: auto;
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 16px; padding: 0 5px;
+      background: var(--gold); color: var(--g-900);
+      font-size: 9.5px; font-weight: 800;
+      border-radius: 8px;
+      letter-spacing: 0;
+      box-shadow: 0 0 0 1px rgba(201,169,97,.3), 0 1px 3px rgba(201,169,97,.4);
+    }
+    .filter-group {
+      padding: 8px 16px 4px;
+      font-size: 10px; color: rgba(255,255,255,.45);
+      font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .filter-list {
+      padding: 0 8px 6px;
+    }
+    .filter-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 5px 8px; margin-bottom: 1px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .12s ease;
+      position: relative;
+    }
+    .filter-item:hover { background: rgba(255,255,255,.05); }
+    .filter-item:has(input:checked) {
+      background: linear-gradient(90deg, rgba(201,169,97,.12), rgba(201,169,97,.02));
+    }
+    .filter-item span {
+      font-size: 11px; color: rgba(255,255,255,.7);
+      cursor: pointer;
+      line-height: 1.35; font-weight: 500;
+      flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .filter-item:has(input:checked) span { color: #fff; font-weight: 600; }
+    .filter-item input[type=checkbox] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border: 1.5px solid rgba(255,255,255,.28);
+      border-radius: 3px;
+      background: rgba(0,0,0,.15);
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      transition: all .15s ease;
+    }
+    .filter-item:hover input[type=checkbox] { border-color: rgba(201,169,97,.55); }
+    .filter-item input[type=checkbox]:checked {
+      background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(201,169,97,.18);
+    }
+    .filter-item input[type=checkbox]:checked::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 0;
+      width: 5px; height: 9px;
+      border: solid var(--g-900);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    .btn-clear {
+      margin: 12px 12px 14px;
+      width: calc(100% - 24px);
+      padding: 8px 0; font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(201,169,97,.3);
+      color: rgba(255,255,255,.7);
+      border-radius: 6px; cursor: pointer;
+      transition: all .18s ease;
+      letter-spacing: .3px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-clear:hover {
+      border-color: var(--gold);
+      color: var(--g-900);
+      background: var(--gold);
+      box-shadow: 0 2px 8px rgba(201,169,97,.3);
+    }
+    .btn-clear:disabled {
+      opacity: .35; cursor: not-allowed;
+      border-color: rgba(255,255,255,.1);
+      color: rgba(255,255,255,.3);
+      background: transparent;
+      box-shadow: none;
+    }
+    .btn-clear:disabled:hover {
+      border-color: rgba(255,255,255,.1);
+      color: rgba(255,255,255,.3);
+      background: transparent;
+    }
 
     /* ── GRID DE GRAFICOS ── */
     .charts-grid {
@@ -138,36 +379,48 @@
       display: grid;
       grid-template-columns: 1.8fr 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      gap: 8px;
-      padding: 8px;
+      gap: 12px;
+      padding: 12px;
       background: var(--bg);
       overflow: hidden;
     }
 
     .chart-card {
       background: var(--card);
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid var(--border);
-      box-shadow: 0 1px 6px rgba(107,26,42,.07);
+      box-shadow: var(--shadow);
       display: flex; flex-direction: column;
       overflow: hidden;
       min-height: 0;
+      transition: box-shadow .2s;
     }
+    .chart-card:hover { box-shadow: var(--shadow-lg); }
     .chart-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 9px 13px 4px;
-      border-bottom: 1px solid #F5EEF0;
+      padding: 11px 16px 9px;
+      border-bottom: 1px solid var(--border-2);
       flex-shrink: 0;
+      position: relative;
+    }
+    .chart-header::after {
+      content: ''; position: absolute; bottom: -1px; left: 16px;
+      width: 32px; height: 2px;
+      background: var(--g-600);
+      border-radius: 1px;
     }
     .chart-title {
-      font-size: .68rem; font-weight: 700;
-      color: var(--g); text-transform: uppercase; letter-spacing: .4px;
-      display: flex; align-items: center; gap: 5px;
+      font-size: .88rem; font-weight: 700;
+      color: var(--g-700); text-transform: uppercase; letter-spacing: .8px;
+      display: flex; align-items: center; gap: 8px;
     }
-    .chart-title i { color: var(--g2); font-size: .78rem; }
-    .chart-subtitle { font-size: .58rem; color: var(--txt2); }
+    .chart-title i { color: var(--g-500); font-size: 1rem; }
+    .chart-subtitle {
+      font-size: .8rem; color: var(--txt2); font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
     .chart-body {
-      flex: 1; padding: 6px 10px 8px;
+      flex: 1; padding: 8px 12px 10px;
       min-height: 0; position: relative;
       background: var(--card);
     }
@@ -175,75 +428,217 @@
 
     .card-tall { grid-row: 1 / 3; }
 
-    /* health bar */
-    .health-list { padding: 6px 12px 8px; overflow-y: auto; flex: 1; background: var(--card); }
-    .health-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-    .health-name { font-size: .6rem; color: var(--txt2); width: 120px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .health-bar-wrap { flex: 1; height: 7px; background: #F0E8EA; border-radius: 4px; overflow: hidden; }
-    .health-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
-    .health-val { font-size: .6rem; color: var(--txt2); width: 70px; text-align: right; flex-shrink: 0; }
-    .health-badge { font-size: .55rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; flex-shrink: 0; }
-    .hb-bien       { background: #D6EFDA; color: #1A5C26; }
-    .hb-critico    { background: #FFF3CD; color: #7A5000; }
-    .hb-limite     { background: #FFF3CD; color: #7A5000; }
-    .hb-sobrepasado{ background: #FAD7DC; color: #7A0A18; }
-
-    /* Refresh */
-    .refresh-pill {
-      position: fixed; bottom: 10px; right: 12px;
-      background: rgba(107,26,42,.08);
-      border: 1px solid var(--guinda-border, #D4A0AD);
-      border-radius: 20px; padding: 3px 10px;
-      font-size: .6rem; color: var(--txt2); z-index: 50;
-      display: flex; align-items: center; gap: 5px;
+    /* SALUD PRESUPUESTAL */
+    .health-list {
+      padding: 4px 0; overflow-y: auto; flex: 1; background: var(--card);
     }
-    .refresh-pill .dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .health-row {
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 8px 14px 9px;
+      border-bottom: 1px solid #F2F4F8;
+      transition: background .15s;
+    }
+    .health-row:hover { background: var(--bg2); }
+    .health-row:last-child { border-bottom: none; }
+    .health-row-top {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+    }
+    .health-name {
+      font-size: .85rem; color: var(--txt);
+      font-weight: 600;
+      flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      letter-spacing: .1px;
+    }
+    .health-badge {
+      font-size: .68rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 4px;
+      flex-shrink: 0; letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+    .hb-bien        { background: #DCFCE7; color: #14532D; }
+    .hb-observacion { background: #FED7AA; color: #9A3412; border: 1px solid #F97316; }
+    .hb-critico     { background: #FEF3C7; color: #78350F; }
+    .hb-limite      { background: #FEF3C7; color: #78350F; }
+    .hb-sobrepasado { background: #FEE2E2; color: #7F1D1D; }
+    .health-row-bot {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .health-bar-wrap {
+      flex: 1; height: 7px; background: #EEF0F5; border-radius: 4px;
+      overflow: hidden; box-shadow: inset 0 1px 1px rgba(0,0,0,.04);
+    }
+    .health-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .health-val {
+      font-size: .85rem; color: var(--txt);
+      text-align: right; flex-shrink: 0;
+      font-variant-numeric: tabular-nums; font-weight: 700;
+      white-space: nowrap;
+    }
 
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: #F5EEF0; }
-    ::-webkit-scrollbar-thumb { background: #D4A0AD; border-radius: 2px; }
+    /* ── REFRESH PILL ── */
+    .refresh-pill {
+      position: fixed; bottom: 36px; right: 16px;
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 22px; padding: 6px 14px;
+      font-size: .68rem; color: var(--txt2); z-index: 50;
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 500;
+      box-shadow: var(--shadow);
+    }
+    .refresh-pill .dot {
+      width: 7px; height: 7px; background: var(--ok);
+      border-radius: 50%; animation: pulse 2s infinite;
+      box-shadow: 0 0 0 0 rgba(22,163,74,.5);
+    }
+    @keyframes pulse {
+      0%,100%{ opacity:1; transform: scale(1); }
+      50%{ opacity:.5; transform: scale(.85); }
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 28px;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px;
+      font-size: .65rem; color: var(--txt3);
+      z-index: 40;
+    }
+    .footer-left { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .footer-left i { color: var(--g-700); }
+    .footer-right { font-variant-numeric: tabular-nums; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #C5CAD7; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9DA3B5; }
+
+    /* ── IMPRESIÓN ── */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+
+      /* Forzar colores y fondos en todo el documento */
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        width: 100%;
+        background: #fff !important;
+      }
+
+      /* Ocultar elementos que no aportan al impreso */
+      .refresh-pill,
+      .btn-back,
+      .btn-clear,
+      .filter-sep,
+      .filter-lbl,
+      .filter-group,
+      .filter-list,
+      .filter-count-pill { display: none !important; }
+
+      /* Sidebar compacta: solo Vista activa */
+      .sidebar {
+        width: 110px !important;
+        overflow: hidden !important;
+      }
+      .nav-btn:not(.active) { display: none !important; }
+      .nav-btn { padding: 8px 10px !important; font-size: 10px !important; }
+
+      /* Layout principal: permitir mostrar todo */
+      .body-wrap {
+        height: auto !important;
+        min-height: calc(100vh - 56px - 78px - 28px);
+        overflow: visible !important;
+      }
+
+      .charts-grid {
+        height: calc(100vh - 56px - 78px - 50px) !important;
+        overflow: visible !important;
+      }
+
+      /* Cards: que no se partan entre páginas */
+      .chart-card { page-break-inside: avoid; break-inside: avoid; }
+
+      /* Hover effects no deben aparecer impresos */
+      .chart-card:hover { box-shadow: var(--shadow) !important; }
+      .health-row:hover { background: transparent !important; }
+
+      /* Asegurar que la lista de salud muestre todo sin scroll */
+      .health-list { overflow: visible !important; max-height: none !important; }
+
+      /* Footer: que sea relativo y no se solape */
+      .footer { position: relative !important; }
+    }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- HEADER INSTITUCIONAL -->
 <div class="header">
   <div class="header-left">
-    <div class="header-logo"><i class="bi bi-mortarboard-fill" style="color:#fff;"></i></div>
-    <span class="header-title">ESCUELA DE POSGRADO</span>
+    <div class="header-logo">
+      <img src="{{ url_for('static', filename='Escudo_Universidad_Nacional_de_Piura.png') }}" alt="UNP">
+    </div>
+    <div class="header-titles">
+      <span class="header-org">Universidad Nacional de Piura</span>
+      <span class="header-title">Escuela de Posgrado</span>
+    </div>
   </div>
-  <span class="header-center">Analisis Presupuestal en Tiempo Real</span>
+  <span class="header-center">Análisis Presupuestal · Tiempo Real</span>
   <div class="header-right">
-    <span class="ts" id="tsUpdate"></span>
+    <span class="ts" id="tsUpdate"><i class="bi bi-clock-history"></i></span>
+    <button class="btn-pdf" id="btnPdf" onclick="descargarPDF()" title="Descargar reporte en PDF">
+      <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+    </button>
     <a href="{{ url_for('admin.dashboard') if current_user.rol == 'admin' else url_for('tesorera.presupuesto') }}"
        class="btn-back" title="Volver al sistema">
-      <i class="bi bi-arrow-left-circle-fill"></i>
+      <i class="bi bi-box-arrow-left"></i>
     </a>
   </div>
+</div>
+
+<!-- Overlay durante captura -->
+<div class="capturing-overlay" id="captureOverlay">
+  <div class="spinner"></div>
+  <div class="msg">Generando reporte PDF…</div>
 </div>
 
 <!-- KPI BAR -->
 <div class="kpi-bar">
   <div class="kpi-item ing">
-    <i class="bi bi-graph-up-arrow kpi-icon"></i>
-    <div><div class="kpi-lbl">Ingresos</div><div class="kpi-val" id="kpi-ing">—</div></div>
+    <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+    <div class="kpi-text"><div class="kpi-lbl">Ingresos</div><div class="kpi-val" id="kpi-ing">—</div></div>
   </div>
   <div class="kpi-item gas">
-    <i class="bi bi-graph-down-arrow kpi-icon"></i>
-    <div><div class="kpi-lbl">Gastos</div><div class="kpi-val" id="kpi-gas">—</div></div>
+    <div class="kpi-icon"><i class="bi bi-graph-down-arrow"></i></div>
+    <div class="kpi-text"><div class="kpi-lbl">Gastos Ejecutados</div><div class="kpi-val" id="kpi-gas">—</div></div>
   </div>
   <div class="kpi-item ocep">
-    <i class="bi bi-percent kpi-icon"></i>
-    <div><div class="kpi-lbl">Ret. OCEP (10%)</div><div class="kpi-val" id="kpi-ocep">—</div></div>
+    <div class="kpi-icon"><i class="bi bi-percent"></i></div>
+    <div class="kpi-text"><div class="kpi-lbl">Retención OCEP · 10%</div><div class="kpi-val" id="kpi-ocep">—</div></div>
   </div>
   <div class="kpi-item epg">
-    <i class="bi bi-bank kpi-icon"></i>
-    <div><div class="kpi-lbl">Ret. EPG (5%)</div><div class="kpi-val" id="kpi-epg">—</div></div>
+    <div class="kpi-icon"><i class="bi bi-bank"></i></div>
+    <div class="kpi-text"><div class="kpi-lbl">Retención EPG · 5%</div><div class="kpi-val" id="kpi-epg">—</div></div>
   </div>
   <div class="kpi-item sal">
-    <i class="bi bi-wallet2 kpi-icon"></i>
-    <div><div class="kpi-lbl">Saldo Disponible</div><div class="kpi-val" id="kpi-sal">—</div></div>
+    <div class="kpi-icon"><i class="bi bi-wallet2"></i></div>
+    <div class="kpi-text"><div class="kpi-lbl">Saldo Disponible</div><div class="kpi-val" id="kpi-sal">—</div></div>
   </div>
 </div>
 
@@ -254,40 +649,46 @@
   <div class="sidebar">
     <div class="nav-section-lbl">Vista</div>
     <div class="nav-btn active" id="btn-principal" onclick="setVista('',this)">
-      <i class="bi bi-house-fill"></i> Principal
+      <i class="bi bi-grid-1x2-fill"></i> Principal
     </div>
     <div class="nav-btn" id="btn-maestrias" onclick="setVista('MAESTRIA',this)">
-      <i class="bi bi-book-fill"></i> Maestrias
+      <i class="bi bi-book-fill"></i> Maestrías
     </div>
     <div class="nav-btn" id="btn-doctorados" onclick="setVista('DOCTORADO',this)">
       <i class="bi bi-mortarboard-fill"></i> Doctorados
     </div>
+    <div class="nav-btn" id="btn-epg" onclick="setVista('EPG',this)">
+      <i class="bi bi-bank"></i> EPG
+    </div>
 
     <div class="filter-sep"></div>
-    <div class="filter-lbl"><i class="bi bi-funnel-fill me-1"></i>Filtros</div>
+    <div class="filter-lbl">
+      <i class="bi bi-funnel-fill"></i>Filtros
+      <span id="filterCount" class="filter-count-pill" style="display:none;">0</span>
+    </div>
     <div class="filter-group">Facultad</div>
     <div class="filter-list" id="filtroFacs"></div>
-    <div class="filter-group">Mencion</div>
-    <div class="filter-list" id="filtroMens" style="max-height:120px;overflow-y:auto;"></div>
-    <button class="btn-clear" onclick="limpiarFiltros()">
-      <i class="bi bi-x-circle me-1"></i>Borrar filtros
+    <div class="filter-group">Mención</div>
+    <div class="filter-list" id="filtroMens" style="max-height:160px;overflow-y:auto;"></div>
+    <button class="btn-clear" id="btnClear" onclick="limpiarFiltros()" disabled>
+      <i class="bi bi-x-circle"></i> Borrar filtros
     </button>
   </div>
 
   <!-- GRID -->
   <div class="charts-grid">
 
-    <!-- 1. Presupuesto por Facultad (columna grande izquierda) -->
+    <!-- 1. Presupuesto por Facultad -->
     <div class="chart-card card-tall">
       <div class="chart-header">
-        <div class="chart-title"><i class="bi bi-bar-chart-horizontal-fill"></i> Presupuesto por Facultad</div>
+        <div class="chart-title"><i class="bi bi-bar-chart-line-fill"></i> <span id="titleFacultad">Presupuesto por Facultad</span></div>
       </div>
       <div class="chart-body">
         <canvas id="cFacultad"></canvas>
       </div>
     </div>
 
-    <!-- 2. Saldo por Nivel Academico (donut) -->
+    <!-- 2. Saldo por Nivel -->
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title"><i class="bi bi-pie-chart-fill"></i> Saldo por Nivel</div>
@@ -297,20 +698,20 @@
       </div>
     </div>
 
-    <!-- 3. Distribucion del Gasto (donut) -->
+    <!-- 3. Tipo de Gasto -->
     <div class="chart-card">
       <div class="chart-header">
-        <div class="chart-title"><i class="bi bi-pie-chart"></i> Tipo de Gasto</div>
+        <div class="chart-title"><i class="bi bi-pie-chart"></i> Distribución de Gasto</div>
       </div>
       <div class="chart-body">
         <canvas id="cTipoGasto"></canvas>
       </div>
     </div>
 
-    <!-- 4. Erosion de Fondos (waterfall horizontal) -->
+    <!-- 4. Erosión de Fondos -->
     <div class="chart-card">
       <div class="chart-header">
-        <div class="chart-title"><i class="bi bi-funnel-fill"></i> Erosion de Fondos</div>
+        <div class="chart-title"><i class="bi bi-funnel-fill"></i> Erosión de Fondos</div>
         <span class="chart-subtitle" id="pctSaldo"></span>
       </div>
       <div class="chart-body">
@@ -318,7 +719,7 @@
       </div>
     </div>
 
-    <!-- 5. Semaforo presupuestal (health) -->
+    <!-- 5. Salud Presupuestal -->
     <div class="chart-card" style="grid-column: 3;">
       <div class="chart-header">
         <div class="chart-title"><i class="bi bi-activity"></i> Salud Presupuestal</div>
@@ -333,7 +734,16 @@
 <!-- Refresh pill -->
 <div class="refresh-pill">
   <div class="dot"></div>
-  Tiempo real &nbsp;|&nbsp; próx. actualización: <span id="cd">30</span>s
+  Actualización en <span id="cd">30</span>s
+</div>
+
+<!-- Footer institucional -->
+<div class="footer">
+  <div class="footer-left">
+    <i class="bi bi-shield-check"></i>
+    Universidad Nacional de Piura · Escuela de Posgrado · Sistema EPG
+  </div>
+  <div class="footer-right" id="footerDate"></div>
 </div>
 
 <script>
@@ -352,12 +762,13 @@ let cdTimer;
 // ─────────────────────────────────────────────────
 const sol = n => 'S/ ' + Number(n).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-const COLORES = ['#6B1A2A','#8B2340','#A8485E','#541422','#C06878',
-                 '#3D0A14','#7B3040','#D08898','#4A1020','#B05065'];
+// Paleta institucional consistente (guinda UNP, tonos suaves y elegantes)
+const COLORES = ['#8B2340','#A23856','#B85870','#CC7B8E','#DDA1AF',
+                 '#6E1F30','#9B3450','#C06878','#7E2640','#A85068'];
 
-const COLORES_SOFT = ['rgba(107,26,42,.8)','rgba(139,35,64,.8)','rgba(168,72,94,.8)',
-                      'rgba(84,20,34,.8)','rgba(192,104,120,.8)','rgba(61,10,20,.8)',
-                      'rgba(123,48,64,.8)','rgba(208,136,152,.8)','rgba(74,16,32,.8)','rgba(176,80,101,.8)'];
+const COLORES_SOFT = ['rgba(139,35,64,.78)','rgba(162,56,86,.75)','rgba(184,88,112,.72)',
+                      'rgba(204,123,142,.7)','rgba(221,161,175,.7)','rgba(110,31,48,.78)',
+                      'rgba(155,52,80,.75)','rgba(192,104,120,.7)','rgba(126,38,64,.78)','rgba(168,80,104,.72)'];
 
 function qs() {
   const p = new URLSearchParams();
@@ -374,8 +785,24 @@ function killChart(id) {
 const BASE_OPTS = {
   responsive: true,
   maintainAspectRatio: false,
-  animation: { duration: 600 },
-  plugins: { legend: { display: false } },
+  animation: { duration: 700, easing: 'easeOutQuart' },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: 'rgba(28,31,42,.95)',
+      titleColor: '#fff',
+      bodyColor: '#E4E7EE',
+      borderColor: 'rgba(255,255,255,.1)',
+      borderWidth: 1,
+      padding: 10,
+      cornerRadius: 6,
+      titleFont: { family: 'Inter', size: 11, weight: '600' },
+      bodyFont:  { family: 'Inter', size: 11, weight: '500' },
+      displayColors: true,
+      boxPadding: 4,
+    }
+  },
+  font: { family: 'Inter' },
 };
 
 // ─────────────────────────────────────────────────
@@ -394,31 +821,51 @@ function setVista(tipo, btn) {
 //  FILTROS
 // ─────────────────────────────────────────────────
 function cargarFiltros() {
+  // En vista EPG no se muestra la seccion de filtros (EPG no es facultad y solo hay 1 mencion)
+  const isEpg = tipoActivo === 'EPG';
+  const filterSelectors = ['.filter-sep', '.filter-lbl', '.filter-group', '#filtroFacs', '#filtroMens', '#btnClear'];
+  filterSelectors.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      el.style.display = isEpg ? 'none' : '';
+    });
+  });
+  if (isEpg) return;
+
   fetch('/api/analytics/filtros?' + qs())
     .then(r => r.json())
     .then(d => {
       document.getElementById('filtroFacs').innerHTML = d.facultades.map(f => {
         const short = f.replace('FAC ','').replace('FACULTAD DE ','');
-        return `<div class="filter-item">
+        return `<label class="filter-item" title="${f}">
           <input type="checkbox" value="${f}" onchange="toggleFac(this)">
-          <label title="${f}">${short.slice(0,24)}</label>
-        </div>`;
+          <span>${short}</span>
+        </label>`;
       }).join('');
 
       document.getElementById('filtroMens').innerHTML = d.menciones.map(m => {
-        const abr = m.mencion.split(' - ').pop()?.slice(0,20) || m.mencion.slice(0,20);
-        return `<div class="filter-item">
+        const abr = m.mencion.split(' - ').pop() || m.mencion;
+        return `<label class="filter-item" title="${m.mencion}">
           <input type="checkbox" value="${m.mencion}" onchange="toggleMen(this)">
-          <label title="${m.mencion}">${abr}</label>
-        </div>`;
+          <span>${abr}</span>
+        </label>`;
       }).join('');
+      actualizarContadorFiltros();
     });
+}
+
+function actualizarContadorFiltros() {
+  const total = filtroFacs.length + filtroMens.length;
+  const pill = document.getElementById('filterCount');
+  pill.textContent = total;
+  pill.style.display = total > 0 ? 'inline-flex' : 'none';
+  document.getElementById('btnClear').disabled = total === 0;
 }
 
 function toggleFac(cb) {
   filtroFacs = cb.checked
     ? [...filtroFacs, cb.value]
     : filtroFacs.filter(f => f !== cb.value);
+  actualizarContadorFiltros();
   refreshAll();
 }
 
@@ -426,6 +873,7 @@ function toggleMen(cb) {
   filtroMens = cb.checked
     ? [...filtroMens, cb.value]
     : filtroMens.filter(m => m !== cb.value);
+  actualizarContadorFiltros();
   refreshAll();
 }
 
@@ -433,6 +881,7 @@ function limpiarFiltros() {
   filtroFacs = []; filtroMens = [];
   document.querySelectorAll('#filtroFacs input, #filtroMens input')
     .forEach(c => c.checked = false);
+  actualizarContadorFiltros();
   refreshAll();
 }
 
@@ -455,8 +904,11 @@ function refreshAll() {
     renderErosion(erosion);
     renderTipoGasto(distGasto);
     renderHealth(top10);
-    document.getElementById('tsUpdate').textContent =
-      'Act. ' + new Date().toLocaleTimeString('es-PE');
+    const ahora = new Date();
+    document.getElementById('tsUpdate').innerHTML =
+      '<i class="bi bi-clock-history"></i> Act. ' + ahora.toLocaleTimeString('es-PE');
+    document.getElementById('footerDate').textContent =
+      ahora.toLocaleDateString('es-PE', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   });
 }
 
@@ -470,15 +922,24 @@ function renderKPIs(d) {
   document.getElementById('kpi-epg').textContent  = sol(d.ret_epg);
   const el = document.getElementById('kpi-sal');
   el.textContent = sol(d.saldo);
-  el.style.color = d.saldo < 0 ? '#ef5350' : d.saldo < d.ingresos * 0.15 ? '#ffa726' : '#66bb6a';
+  el.style.color = d.saldo < 0 ? '#FCA5A5' : d.saldo < d.ingresos * 0.15 ? '#FCD34D' : '#86EFAC';
 }
 
 // ─────────────────────────────────────────────────
-//  1. PRESUPUESTO POR FACULTAD (horizontal grouped bar)
+//  1. PRESUPUESTO POR FACULTAD
 // ─────────────────────────────────────────────────
 function renderFacultad(data) {
   killChart('fac');
   const ctx = document.getElementById('cFacultad').getContext('2d');
+
+  // Titulo dinamico segun la vista
+  const titleEl = document.getElementById('titleFacultad');
+  if (titleEl) {
+    titleEl.textContent = tipoActivo === 'EPG'
+      ? 'Presupuesto EPG'
+      : 'Presupuesto por Facultad';
+  }
+
   const labels = data.map(d => {
     let n = d.facultad.replace('FAC ','').replace('FACULTAD DE ','');
     return n.length > 28 ? n.slice(0,26)+'…' : n;
@@ -492,81 +953,112 @@ function renderFacultad(data) {
         {
           label: 'Ingresos',
           data: data.map(d => d.ingresos),
-          backgroundColor: 'rgba(107,26,42,.82)',
-          borderRadius: 3,
+          backgroundColor: 'rgba(139,35,64,.82)',
+          borderRadius: 4,
+          borderSkipped: false,
         },
         {
           label: 'Gastos',
           data: data.map(d => d.gastos),
-          backgroundColor: 'rgba(168,72,94,.45)',
-          borderRadius: 3,
+          backgroundColor: 'rgba(204,123,142,.62)',
+          borderRadius: 4,
+          borderSkipped: false,
         },
       ]
     },
     options: {
       ...BASE_OPTS,
       indexAxis: 'y',
+      layout: { padding: { right: 110 } },
       plugins: {
+        ...BASE_OPTS.plugins,
         legend: {
           display: true, position: 'bottom',
-          labels: { color: '#999', font: {size: 9}, boxWidth: 10, padding: 8 }
+          labels: { color: '#5A6175', font: {family:'Inter', size: 13, weight:'600'}, boxWidth: 12, padding: 14, usePointStyle: true, pointStyle: 'circle' }
         },
         tooltip: {
-          callbacks: { label: i => ' ' + sol(i.raw) }
+          ...BASE_OPTS.plugins.tooltip,
+          callbacks: { label: i => ' ' + i.dataset.label + ': ' + sol(i.raw) }
+        },
+        datalabels: {
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          anchor: 'end',
+          align: 'right',
+          offset: 6,
+          color: '#1C1F2A',
+          font: { family: 'Inter', size: 11.5, weight: '700' },
+          formatter: v => 'S/ ' + Math.round(v).toLocaleString('es-PE'),
         }
       },
       scales: {
         x: {
-          ticks: { color:'#7A5060', font:{size:8}, callback: v => 'S/'+Math.round(v/1000)+'K' },
-          grid: { color:'rgba(107,26,42,.07)' },
+          ticks: { color:'#5A6175', font:{family:'Inter', size:12, weight:'500'}, callback: v => 'S/ '+Math.round(v/1000)+'K' },
+          grid: { color:'rgba(15,23,42,.05)', drawBorder: false },
         },
-        y: { ticks: { color:'#4A1020', font:{size:9} }, grid: { display:false } }
+        y: {
+          ticks: { color:'#1C1F2A', font:{family:'Inter', size:12, weight:'600'} },
+          grid: { display:false, drawBorder: false }
+        }
       }
     }
   });
 }
 
 // ─────────────────────────────────────────────────
-//  2. SALDO POR NIVEL (donut)
+//  2. SALDO POR NIVEL
 // ─────────────────────────────────────────────────
 function renderNivel(data) {
   killChart('nivel');
   const ctx = document.getElementById('cNivel').getContext('2d');
-  const CMAP = { MAESTRIA:'#6B1A2A', DOCTORADO:'#A8D4F4', EPG:'#A8485E' };
+  const CMAP = { MAESTRIA:'#8B2340', DOCTORADO:'#B85870', EPG:'#D4B26A' };
 
   charts['nivel'] = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: data.map(d => `${d.nivel} ${d.pct}%`),
+      labels: data.map(d => `${d.nivel} · ${d.pct}%`),
       datasets: [{
         data: data.map(d => Math.max(d.saldo, 0)),
-        backgroundColor: data.map(d => CMAP[d.nivel] || '#555'),
-        borderColor: '#16213e',
+        backgroundColor: data.map(d => CMAP[d.nivel] || '#A8485E'),
+        borderColor: '#FFFFFF',
         borderWidth: 3,
-        hoverOffset: 6,
+        hoverOffset: 8,
       }]
     },
     options: {
       ...BASE_OPTS,
-      cutout: '68%',
+      cutout: '70%',
       plugins: {
+        ...BASE_OPTS.plugins,
         legend: {
           display: true, position: 'bottom',
-          labels: { color:'#4A1020', font:{size:9}, boxWidth:10, padding:6 }
+          labels: { color:'#1C1F2A', font:{family:'Inter', size:13, weight:'600'}, boxWidth:13, padding:12, usePointStyle:true, pointStyle:'circle' }
         },
-        tooltip: { callbacks: { label: i => ' '+sol(i.raw) } }
+        tooltip: { ...BASE_OPTS.plugins.tooltip, callbacks: { label: i => ' '+sol(i.raw) } },
+        datalabels: {
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          color: '#FFFFFF',
+          font: { family: 'Inter', size: 14, weight: '800' },
+          textShadowBlur: 5,
+          textShadowColor: 'rgba(0,0,0,.55)',
+          formatter: (v, ctx) => {
+            const d = data[ctx.dataIndex];
+            return d ? d.pct + '%' : '';
+          },
+        }
       }
     }
   });
 }
 
 // ─────────────────────────────────────────────────
-//  3. TIPO DE GASTO (donut)
+//  3. TIPO DE GASTO
 // ─────────────────────────────────────────────────
 function renderTipoGasto(data) {
   killChart('gasto');
   if (!data.length) return;
   const ctx = document.getElementById('cTipoGasto').getContext('2d');
+
+  const totalGasto = data.reduce((acc, d) => acc + d.total, 0) || 1;
 
   charts['gasto'] = new Chart(ctx, {
     type: 'doughnut',
@@ -575,44 +1067,89 @@ function renderTipoGasto(data) {
       datasets: [{
         data: data.map(d => d.total),
         backgroundColor: COLORES,
-        borderColor: '#16213e',
-        borderWidth: 2,
-        hoverOffset: 6,
+        borderColor: '#FFFFFF',
+        borderWidth: 2.5,
+        hoverOffset: 8,
       }]
     },
     options: {
       ...BASE_OPTS,
-      cutout: '55%',
+      cutout: '58%',
       plugins: {
+        ...BASE_OPTS.plugins,
         legend: {
           display: true, position: 'bottom',
-          labels: { color:'#4A1020', font:{size:8}, boxWidth:9, padding:5 }
+          labels: { color:'#1C1F2A', font:{family:'Inter', size:11, weight:'600'}, boxWidth:11, padding:8, usePointStyle:true, pointStyle:'circle' }
         },
-        tooltip: { callbacks: { label: i => ' '+sol(i.raw) } }
+        tooltip: { ...BASE_OPTS.plugins.tooltip, callbacks: { label: i => ' '+sol(i.raw) } },
+        datalabels: {
+          display: ctx => (ctx.dataset.data[ctx.dataIndex] / totalGasto) >= 0.04,
+          color: '#FFFFFF',
+          font: { family: 'Inter', size: 13, weight: '800' },
+          textShadowBlur: 5,
+          textShadowColor: 'rgba(0,0,0,.6)',
+          formatter: v => Math.round((v/totalGasto)*100) + '%',
+        }
       }
     }
   });
 }
 
 // ─────────────────────────────────────────────────
-//  4. EROSION DE FONDOS (horizontal bar waterfall)
+//  4. EROSION DE FONDOS  (descomposicion del flujo)
 // ─────────────────────────────────────────────────
 function renderErosion(d) {
   killChart('erosion');
   const ctx = document.getElementById('cErosion').getContext('2d');
 
-  const pct = d.pct_saldo;
   document.getElementById('pctSaldo').textContent =
-    `${pct}% del presupuesto disponible`;
+    `${d.pct_saldo}% disponible`;
 
-  const vals = [d.ingresos, d.despues_ocep, d.despues_epg, d.saldo_final];
-  const labels = ['Ingresos\nBrutos', 'Tras OCEP\n(−10%)', 'Tras EPG\n(−5%)', 'Saldo\nFinal'];
-  const colors = [
-    'rgba(107,26,42,.90)',
-    'rgba(168,72,94,.80)',
-    'rgba(192,104,120,.75)',
-    d.saldo_final >= 0 ? 'rgba(34,197,94,.85)' : 'rgba(239,68,68,.85)'
-  ];
+  // Componentes individuales (no cumulativos)
+  const ingresos = d.ingresos;
+  const ocep     = d.ingresos     - d.despues_ocep;
+  const epg      = d.despues_ocep - d.despues_epg;
+  const gastos   = d.despues_epg  - d.saldo_final;
+  const saldo    = d.saldo_final;
+
+  // En vista EPG, omitir la fila de Retencion EPG (no aplica, EPG es la receptora)
+  const showEpg = !d.omitir_epg && epg > 0;
+
+  const vals   = showEpg
+    ? [ingresos, ocep, epg, gastos, saldo]
+    : [ingresos, ocep, gastos, saldo];
+  const labels = showEpg
+    ? ['Ingresos Brutos', 'Retención OCEP', 'Retención EPG', 'Gastos Ejecutados', 'Saldo Disponible']
+    : ['Ingresos Brutos', 'Retención OCEP', 'Gastos Ejecutados', 'Saldo Disponible'];
+  const colors = showEpg
+    ? [
+        'rgba(139,35,64,.85)',
+        'rgba(217,119,6,.78)',
+        'rgba(245,158,11,.7)',
+        'rgba(220,38,38,.78)',
+        saldo >= 0 ? 'rgba(22,163,74,.85)' : 'rgba(220,38,38,.85)'
+      ]
+    : [
+        'rgba(139,35,64,.85)',
+        'rgba(217,119,6,.78)',
+        'rgba(220,38,38,.78)',
+        saldo >= 0 ? 'rgba(22,163,74,.85)' : 'rgba(220,38,38,.85)'
+      ];
+
+  const pcts = ingresos > 0
+    ? (showEpg ? [
+        100,
+        Math.round(ocep   / ingresos * 1000) / 10,
+        Math.round(epg    / ingresos * 1000) / 10,
+        Math.round(gastos / ingresos * 1000) / 10,
+        d.pct_saldo
+      ] : [
+        100,
+        Math.round(ocep   / ingresos * 1000) / 10,
+        Math.round(gastos / ingresos * 1000) / 10,
+        d.pct_saldo
+      ])
+    : (showEpg ? [0,0,0,0,0] : [0,0,0,0]);
 
   charts['erosion'] = new Chart(ctx, {
     type: 'bar',
@@ -621,67 +1158,216 @@ function renderErosion(d) {
       datasets: [{
         data: vals,
         backgroundColor: colors,
-        borderRadius: 4,
-        barThickness: 28,
+        borderRadius: 5,
+        barThickness: 22,
       }]
     },
     options: {
       ...BASE_OPTS,
       indexAxis: 'y',
+      layout: { padding: { right: 195 } },
       plugins: {
+        ...BASE_OPTS.plugins,
         legend: { display:false },
         tooltip: {
+          ...BASE_OPTS.plugins.tooltip,
           callbacks: {
             label(i) {
-              const pcts = [100, d.pct_ocep, d.pct_epg, d.pct_saldo];
-              return ' '+sol(i.raw)+' ('+pcts[i.dataIndex]+'%)';
+              return ' '+sol(i.raw)+'  ·  '+pcts[i.dataIndex]+'%';
             }
           }
+        },
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'right',
+          offset: 8,
+          color: '#1C1F2A',
+          font: { family: 'Inter', size: 12.5, weight: '700' },
+          formatter: (v, ctx) => {
+            return 'S/ ' + Math.round(v).toLocaleString('es-PE') + ' · ' + pcts[ctx.dataIndex] + '%';
+          },
         }
       },
       scales: {
         x: {
-          ticks: { color:'#7A5060', font:{size:8}, callback: v => 'S/'+Math.round(v/1000)+'K' },
-          grid: { color:'rgba(107,26,42,.07)' },
+          ticks: { color:'#5A6175', font:{family:'Inter', size:11, weight:'500'}, callback: v => 'S/ '+Math.round(v/1000)+'K' },
+          grid: { color:'rgba(15,23,42,.05)', drawBorder: false },
         },
-        y: { ticks: { color:'#4A1020', font:{size:8.5} }, grid:{ display:false } }
+        y: {
+          ticks: { color:'#1C1F2A', font:{family:'Inter', size:12.5, weight:'600'} },
+          grid:{ display:false, drawBorder: false }
+        }
       }
     }
   });
 }
 
 // ─────────────────────────────────────────────────
-//  5. SALUD PRESUPUESTAL (lista con barras)
+//  5. SALUD PRESUPUESTAL
 // ─────────────────────────────────────────────────
 function renderHealth(top10) {
   const container = document.getElementById('healthList');
   const maxIng = Math.max(...top10.map(p => p.ingresos), 1);
 
   const SIT_COLOR = {
-    BIEN: { bar:'#4caf50', badge:'hb-bien' },
-    CRITICO: { bar:'#ff9800', badge:'hb-critico' },
-    'EN EL LIMITE': { bar:'#ff9800', badge:'hb-limite' },
-    SOBREPASADO: { bar:'#ef5350', badge:'hb-sobrepasado' },
+    BIEN:             { bar:'linear-gradient(90deg,#16A34A,#22C55E)', badge:'hb-bien' },
+    'EN OBSERVACION': { bar:'linear-gradient(90deg,#F97316,#FB923C)', badge:'hb-observacion' },
+    CRITICO:          { bar:'linear-gradient(90deg,#D97706,#F59E0B)', badge:'hb-critico' },
+    'EN EL LIMITE':   { bar:'linear-gradient(90deg,#D97706,#F59E0B)', badge:'hb-limite' },
+    SOBREPASADO:      { bar:'linear-gradient(90deg,#DC2626,#EF4444)', badge:'hb-sobrepasado' },
   };
 
   document.getElementById('lblSalud').textContent =
     top10.filter(p => p.situacion === 'BIEN').length + '/' + top10.length + ' en buen estado';
 
   container.innerHTML = top10.map(p => {
-    const pct = Math.max(Math.round((p.ingresos / maxIng) * 100), 2);
     const gastosPct = p.ingresos > 0 ? Math.round(p.gastos/p.ingresos*100) : 0;
     const cfg = SIT_COLOR[p.situacion] || SIT_COLOR['BIEN'];
-    const nombre = p.mencion.split(' - ').pop()?.slice(0,18) || p.mencion.slice(0,18);
+    const lbl = p.situacion === 'EN EL LIMITE' ? 'LÍMITE'
+              : p.situacion === 'EN OBSERVACION' ? 'OBSERV.'
+              : p.situacion;
     return `
       <div class="health-row">
-        <div class="health-name" title="${p.mencion}">${nombre}</div>
-        <div class="health-bar-wrap">
-          <div class="health-bar-fill" style="width:${gastosPct}%;background:${cfg.bar};"></div>
+        <div class="health-row-top">
+          <div class="health-name" title="${p.mencion}">${p.mencion}</div>
+          <span class="health-badge ${cfg.badge}">${lbl}</span>
         </div>
-        <div class="health-val">${sol(p.saldo)}</div>
-        <span class="health-badge ${cfg.badge}">${p.situacion === 'EN EL LIMITE' ? 'LIMITE' : p.situacion}</span>
+        <div class="health-row-bot">
+          <div class="health-bar-wrap">
+            <div class="health-bar-fill" style="width:${Math.min(gastosPct,100)}%;background:${cfg.bar};"></div>
+          </div>
+          <div class="health-val">${sol(p.saldo)}</div>
+        </div>
       </div>`;
   }).join('');
+}
+
+// ─────────────────────────────────────────────────
+//  EXPORTAR A PDF (captura visual exacta)
+// ─────────────────────────────────────────────────
+async function descargarPDF() {
+  const btn = document.getElementById('btnPdf');
+  const overlay = document.getElementById('captureOverlay');
+
+  if (typeof html2canvas === 'undefined') {
+    alert('La librería html2canvas aún no se ha cargado. Espera 5 segundos y reintenta.');
+    return;
+  }
+  const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  if (!jsPDF) {
+    alert('La librería jsPDF aún no se ha cargado. Espera 5 segundos y reintenta.');
+    return;
+  }
+
+  btn.disabled = true;
+  overlay.classList.add('show');
+
+  // Capturar primero los gráficos (con dimensiones reales antes de cambios de layout)
+  const reemplazos = [];
+  for (const key of Object.keys(charts)) {
+    const chart = charts[key];
+    if (!chart || !chart.canvas) continue;
+    try {
+      const dataUrl = chart.toBase64Image();
+      const cw = chart.canvas.clientWidth || chart.width || 200;
+      const ch = chart.canvas.clientHeight || chart.height || 150;
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.style.cssText = `width:${cw}px;height:${ch}px;display:block;`;
+
+      const parent = chart.canvas.parentNode;
+      const nextSibling = chart.canvas.nextSibling;
+      // REMOVER el canvas del DOM (no solo ocultar)
+      parent.removeChild(chart.canvas);
+      if (nextSibling && nextSibling.parentNode === parent) {
+        parent.insertBefore(img, nextSibling);
+      } else {
+        parent.appendChild(img);
+      }
+      reemplazos.push({ chart, img, parent, nextSibling, canvas: chart.canvas });
+    } catch (e) {
+      console.warn('No se pudo reemplazar chart', key, e);
+    }
+  }
+
+  document.body.classList.add('capturando');
+
+  // Esperar a que cargen las imagenes Y se aplique el layout
+  await Promise.all(reemplazos.map(r => new Promise(res => {
+    if (r.img.complete && r.img.naturalWidth > 0) res();
+    else { r.img.onload = res; r.img.onerror = res; }
+  })));
+  await new Promise(r => setTimeout(r, 350));
+
+  try {
+    const w = document.body.offsetWidth;
+    const h = document.body.offsetHeight;
+
+    const canvas = await html2canvas(document.body, {
+      scale: 1.5,
+      backgroundColor: '#FFFFFF',
+      allowTaint: true,
+      useCORS: false,
+      logging: false,
+      width: w,
+      height: h,
+      windowWidth: w,
+      windowHeight: h,
+      ignoreElements: (el) => {
+        if (el.id === 'captureOverlay') return true;
+        if (el.tagName === 'CANVAS') return true; // ignorar TODOS los canvas (por si acaso)
+        if (el.classList && (el.classList.contains('refresh-pill') || el.classList.contains('footer'))) return true;
+        return false;
+      },
+    });
+
+    let imgData;
+    try {
+      imgData = canvas.toDataURL('image/png', 0.95);
+    } catch (e) {
+      imgData = canvas.toDataURL('image/jpeg', 0.92);
+    }
+
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+
+    const imgRatio = canvas.width / canvas.height;
+    const pageRatio = pdfW / pdfH;
+    let rW, rH;
+    if (imgRatio > pageRatio) { rW = pdfW; rH = pdfW / imgRatio; }
+    else                       { rH = pdfH; rW = pdfH * imgRatio; }
+    const oX = (pdfW - rW) / 2;
+    const oY = (pdfH - rH) / 2;
+
+    const fmt = imgData.startsWith('data:image/jpeg') ? 'JPEG' : 'PNG';
+    pdf.addImage(imgData, fmt, oX, oY, rW, rH, undefined, 'FAST');
+
+    const fecha = new Date().toISOString().slice(0,10);
+    pdf.save(`Analisis-Presupuestal-EPG-${fecha}.pdf`);
+  } catch (err) {
+    console.error('Error generando PDF:', err);
+    alert('Error al generar el PDF:\n\n' + (err.message || err.toString()) + '\n\nAbre la consola (F12) para mas detalles.');
+  } finally {
+    // Restaurar canvases originales en su posicion
+    reemplazos.forEach(r => {
+      try {
+        r.img.remove();
+        if (r.nextSibling && r.nextSibling.parentNode === r.parent) {
+          r.parent.insertBefore(r.canvas, r.nextSibling);
+        } else {
+          r.parent.appendChild(r.canvas);
+        }
+        // Re-renderizar el chart
+        if (r.chart.resize) r.chart.resize();
+        if (r.chart.update) r.chart.update('none');
+      } catch (e) { /* noop */ }
+    });
+    overlay.classList.remove('show');
+    document.body.classList.remove('capturando');
+    btn.disabled = false;
+  }
 }
 
 // ─────────────────────────────────────────────────
@@ -701,6 +1387,11 @@ function startCd() {
 // ─────────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────────
+Chart.defaults.font.family = 'Inter';
+Chart.defaults.color = '#5A6175';
+Chart.register(ChartDataLabels);
+// Por defecto NO mostrar labels (los activamos por gráfico)
+Chart.defaults.set('plugins.datalabels', { display: false });
 cargarFiltros();
 refreshAll();
 startCd();

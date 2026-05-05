@@ -54,24 +54,20 @@
           </tr>
           {% endfor %}
         </tbody>
+        {% set t_ing = programas | sum(attribute='ingresos') %}
+        {% set t_gas = programas | sum(attribute='gastos_total') %}
+        {% set ing_epg = programas | selectattr('es_epg') | sum(attribute='ingresos') %}
+        {% set t_ocep = t_ing * 0.10 %}
+        {% set t_epg = (t_ing - ing_epg) * 0.05 %}
+        {% set t_sal = t_ing - t_gas - t_ocep - t_epg %}
         <tfoot class="table-dark">
           <tr>
             <td colspan="4" class="fw-bold text-end">TOTALES</td>
-            <td class="text-end fw-bold" id="total-ingresos">
-              {{ programas | sum(attribute='ingresos') | format_sol }}
-            </td>
-            <td class="text-end fw-bold" id="total-gastos">
-              {{ programas | sum(attribute='gastos_total') | format_sol }}
-            </td>
-            <td class="text-end fw-bold">
-              {{ programas | sum(attribute='retencion_ocep') | format_sol }}
-            </td>
-            <td class="text-end fw-bold">
-              {{ programas | sum(attribute='retencion_epg') | format_sol }}
-            </td>
-            <td class="text-end fw-bold" id="total-saldo">
-              {{ programas | sum(attribute='saldo_actual') | format_sol }}
-            </td>
+            <td class="text-end fw-bold" id="total-ingresos">{{ t_ing | format_sol }}</td>
+            <td class="text-end fw-bold" id="total-gastos">{{ t_gas | format_sol }}</td>
+            <td class="text-end fw-bold">{{ t_ocep | format_sol }}</td>
+            <td class="text-end fw-bold">{{ t_epg | format_sol }}</td>
+            <td class="text-end fw-bold" id="total-saldo">{{ t_sal | format_sol }}</td>
             <td></td>
           </tr>
         </tfoot>
@@ -98,23 +94,13 @@ document.querySelectorAll('.input-ingreso').forEach(input => {
       .then(r => r.json())
       .then(data => {
         if (data.ok) {
-          document.getElementById(`gastos-${id}`).textContent = formatSol(data.gastos);
-          document.getElementById(`ocep-${id}`).textContent = formatSol(data.retencion_ocep);
-          document.getElementById(`epg-${id}`).textContent = formatSol(data.retencion_epg);
-          document.getElementById(`saldo-${id}`).textContent = formatSol(data.saldo);
-          const sitEl = document.getElementById(`sit-${id}`);
-          sitEl.innerHTML = `<span class="badge-situacion ${data.situacion.replace(/ /g,'_').toLowerCase()}">${data.situacion}</span>`;
           input.classList.add('border-success');
-          setTimeout(() => input.classList.remove('border-success'), 2000);
+          setTimeout(() => location.reload(), 400);
         }
       })
       .catch(err => console.error(err));
     }, 600);
   });
 });
-
-function formatSol(n) {
-  return 'S/ ' + Number(n).toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
 </script>
 {% endblock %}

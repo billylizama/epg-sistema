@@ -120,7 +120,7 @@ def _verificar_presupuesto():
 
     for p in programas:
         sit = p.situacion
-        if sit not in ('CRITICO', 'SOBREPASADO'):
+        if sit not in ('EN OBSERVACION', 'CRITICO', 'SOBREPASADO'):
             continue
 
         # No repetir la misma notificacion en menos de 1 hora
@@ -136,11 +136,14 @@ def _verificar_presupuesto():
             titulo = f'SOBREPASADO: {p.mencion[:60]}'
             msg = (f'El programa "{p.mencion[:80]}" tiene saldo NEGATIVO de '
                    f'S/ {abs(p.saldo_actual):,.2f}. Se han gastado mas fondos de los disponibles.')
-        else:
-            pct = round(p.saldo_actual / (p.ingresos or 1) * 100, 1)
+        elif sit == 'CRITICO':
             titulo = f'CRITICO: {p.mencion[:60]}'
             msg = (f'El programa "{p.mencion[:80]}" tiene solo S/ {p.saldo_actual:,.2f} '
-                   f'disponible ({pct}% del presupuesto). Se recomienda aumentar ingresos.')
+                   f'disponible (saldo entre S/ 1 y S/ 3,000). Se requiere atencion inmediata.')
+        else:  # EN OBSERVACION
+            titulo = f'EN OBSERVACION: {p.mencion[:60]}'
+            msg = (f'El programa "{p.mencion[:80]}" tiene S/ {p.saldo_actual:,.2f} '
+                   f'disponible (saldo entre S/ 3,000 y S/ 7,000). Aviso temprano: revisar planificacion.')
 
         # Notificar a tesorera y admin
         for rol in ('tesorera', 'admin'):

@@ -1,34 +1,475 @@
-{% extends 'base.html' %}
-{% block title %}Iniciar Sesion - Sistema EPG{% endblock %}
-{% block content %}
-<div class="login-card">
-  <div class="login-header">
-    <i class="bi bi-mortarboard-fill" style="font-size:2.5rem;"></i>
-    <h4 class="mt-2 mb-0">Escuela de Posgrado</h4>
-    <small class="opacity-75">Sistema de Planillas</small>
-  </div>
-  <div class="card-body p-4">
-    <form method="POST">
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Usuario</label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-person"></i></span>
-          <input type="text" name="username" class="form-control" placeholder="Usuario"
-                 required autofocus>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar Sesión · Sistema EPG · Universidad Nacional de Piura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --g-900:    #5A1828;
+      --g-800:    #6E1F30;
+      --g-700:    #8B2340;
+      --g-600:    #A23856;
+      --g-500:    #B85870;
+      --gold:     #D4B26A;
+      --gold-soft:#E8CB8E;
+      --bg:       #F7F8FB;
+      --txt:      #1C1F2A;
+      --txt2:     #5A6175;
+      --txt3:     #8990A3;
+      --border:   #E4E7EE;
+      --bad:      #DC2626;
+      --bad-bg:   #FEE2E2;
+      --ok:       #16A34A;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; width: 100%;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    .login-wrap {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* ── PANEL IZQUIERDO INSTITUCIONAL ── */
+    .login-brand {
+      background:
+        radial-gradient(circle at 20% 80%, rgba(212,178,106,.12) 0%, transparent 45%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,.06) 0%, transparent 50%),
+        linear-gradient(135deg, #4A1426 0%, #6E1F30 50%, #4A1426 100%);
+      color: #fff;
+      padding: 60px 70px;
+      display: flex; flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-brand::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+    }
+    /* Patrón decorativo */
+    .login-brand::after {
+      content: ''; position: absolute;
+      width: 600px; height: 600px;
+      right: -200px; bottom: -200px;
+      border: 1px solid rgba(212,178,106,.08);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .brand-deco {
+      position: absolute;
+      width: 400px; height: 400px;
+      right: -100px; bottom: -100px;
+      border: 1px solid rgba(212,178,106,.12);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .brand-top { display: flex; align-items: center; gap: 18px; position: relative; z-index: 2; }
+    .brand-logo {
+      width: 76px; height: 76px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 0 0 3px var(--gold), 0 6px 20px rgba(0,0,0,.35);
+    }
+    .brand-logo img { width: 90%; height: 90%; object-fit: contain; display: block; }
+    .brand-titles { display: flex; flex-direction: column; line-height: 1.25; }
+    .brand-org   { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.7); letter-spacing: 1.5px; text-transform: uppercase; }
+    .brand-name  { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: .3px; margin-top: 2px; }
+    .brand-sub   { font-size: 12px; color: var(--gold-soft); margin-top: 4px; letter-spacing: .8px; font-weight: 500; }
+
+    .brand-mid {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; gap: 26px;
+    }
+    .brand-headline {
+      font-size: 38px; font-weight: 800; line-height: 1.15;
+      letter-spacing: -.6px;
+      color: #fff;
+    }
+    .brand-headline span {
+      color: var(--gold);
+      display: block;
+    }
+    .brand-tagline {
+      font-size: 15px; line-height: 1.55;
+      color: rgba(255,255,255,.78);
+      max-width: 440px;
+      font-weight: 400;
+    }
+
+    .brand-features { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+    .brand-feat {
+      display: flex; align-items: center; gap: 14px;
+      font-size: 14px; color: rgba(255,255,255,.85);
+      font-weight: 500;
+    }
+    .brand-feat .icon-wrap {
+      width: 36px; height: 36px;
+      background: rgba(212,178,106,.16);
+      border: 1px solid rgba(212,178,106,.3);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold);
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .brand-bottom {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; color: rgba(255,255,255,.5);
+      letter-spacing: .5px;
+    }
+    .brand-bottom .dot { color: var(--gold); margin: 0 8px; }
+
+    /* ── PANEL DERECHO FORMULARIO ── */
+    .login-form-side {
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 50px;
+      position: relative;
+    }
+    .login-card {
+      width: 100%; max-width: 410px;
+      animation: slideUp .45s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-h {
+      margin-bottom: 28px;
+    }
+    .form-h .badge-w {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px;
+      color: var(--g-700);
+      background: var(--g-100, #F8E8EE);
+      padding: 5px 11px; border-radius: 20px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .form-h h1 {
+      font-size: 28px; font-weight: 700; color: var(--txt);
+      letter-spacing: -.4px; line-height: 1.2;
+    }
+    .form-h p {
+      font-size: 14px; color: var(--txt2);
+      margin-top: 8px;
+    }
+
+    .alert-flash {
+      background: var(--bad-bg);
+      border: 1px solid #FCA5A5;
+      color: var(--bad);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 18px;
+      animation: shake .4s ease;
+    }
+    .alert-flash i { font-size: 16px; }
+    .alert-flash .close-x {
+      margin-left: auto;
+      cursor: pointer;
+      opacity: .65;
+      transition: opacity .15s;
+    }
+    .alert-flash .close-x:hover { opacity: 1; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%     { transform: translateX(-4px); }
+      75%     { transform: translateX(4px); }
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 12px; font-weight: 600;
+      color: var(--txt2);
+      margin-bottom: 7px;
+      letter-spacing: .3px;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap i.input-ico {
+      position: absolute;
+      left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--txt3);
+      font-size: 15px;
+      transition: color .18s;
+      pointer-events: none;
+    }
+    .input-wrap input {
+      width: 100%;
+      height: 46px;
+      padding: 0 14px 0 42px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      background: #FAFBFC;
+      font-family: inherit;
+      font-size: 14px; color: var(--txt);
+      font-weight: 500;
+      transition: all .18s ease;
+      outline: none;
+    }
+    .input-wrap input:hover {
+      border-color: #C5CAD4;
+      background: #fff;
+    }
+    .input-wrap input:focus {
+      border-color: var(--g-700);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(139,35,64,.12);
+    }
+    .input-wrap input:focus + i.input-ico,
+    .input-wrap input:focus ~ i.input-ico {
+      color: var(--g-700);
+    }
+    .input-wrap .toggle-pwd {
+      position: absolute;
+      right: 12px; top: 50%; transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--txt3);
+      font-size: 16px;
+      padding: 6px;
+      border-radius: 5px;
+      transition: all .15s;
+    }
+    .input-wrap .toggle-pwd:hover {
+      color: var(--g-700);
+      background: var(--g-100, #F8E8EE);
+    }
+
+    .btn-submit {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, var(--g-700) 0%, var(--g-800) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 14.5px; font-weight: 600;
+      letter-spacing: .3px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 9px;
+      transition: all .2s ease;
+      box-shadow: 0 4px 12px rgba(110,31,48,.25);
+      margin-top: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-submit::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(212,178,106,.18), transparent);
+      transition: left .5s;
+    }
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(110,31,48,.35);
+    }
+    .btn-submit:hover::before { left: 100%; }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit i { font-size: 16px; }
+
+    .form-footer {
+      margin-top: 26px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11.5px; color: var(--txt3);
+    }
+    .form-footer .dot-status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-weight: 500;
+    }
+    .form-footer .dot-status::before {
+      content: '';
+      width: 7px; height: 7px;
+      background: var(--ok);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      box-shadow: 0 0 0 0 rgba(22,163,74,.5);
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%     { opacity: .5; transform: scale(.85); }
+    }
+
+    /* ── RESPONSIVO ── */
+    @media (max-width: 980px) {
+      html, body { overflow-y: auto; }
+      .login-wrap { grid-template-columns: 1fr; }
+      .login-brand {
+        padding: 36px 32px;
+        min-height: auto;
+      }
+      .brand-mid { gap: 16px; }
+      .brand-headline { font-size: 26px; }
+      .brand-features { display: none; }
+      .login-form-side { padding: 36px 24px; }
+    }
+    @media (max-width: 480px) {
+      .login-brand { padding: 28px 24px; }
+      .brand-logo { width: 60px; height: 60px; }
+      .brand-name { font-size: 18px; }
+      .brand-headline { font-size: 22px; }
+      .form-h h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <!-- ── PANEL IZQUIERDO INSTITUCIONAL ── -->
+  <div class="login-brand">
+    <div class="brand-deco"></div>
+
+    <div class="brand-top">
+      <div class="brand-logo">
+        <img src="{{ url_for('static', filename='Escudo_Universidad_Nacional_de_Piura.png') }}" alt="UNP">
+      </div>
+      <div class="brand-titles">
+        <span class="brand-org">Universidad Nacional de Piura</span>
+        <span class="brand-name">Escuela de Posgrado</span>
+        <span class="brand-sub">Sistema de Gestión Presupuestal</span>
+      </div>
+    </div>
+
+    <div class="brand-mid">
+      <h2 class="brand-headline">
+        Análisis presupuestal
+        <span>en tiempo real.</span>
+      </h2>
+      <p class="brand-tagline">
+        Plataforma institucional para el seguimiento, control y reporte
+        de los programas académicos de la Escuela de Posgrado.
+      </p>
+
+      <div class="brand-features">
+        <div class="brand-feat">
+          <div class="icon-wrap"><i class="bi bi-graph-up-arrow"></i></div>
+          Indicadores presupuestales actualizados al instante
+        </div>
+        <div class="brand-feat">
+          <div class="icon-wrap"><i class="bi bi-shield-check"></i></div>
+          Control financiero con alertas automáticas
+        </div>
+        <div class="brand-feat">
+          <div class="icon-wrap"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+          Reportes ejecutivos exportables en PDF
         </div>
       </div>
-      <div class="mb-4">
-        <label class="form-label fw-semibold">Contrasena</label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-lock"></i></span>
-          <input type="password" name="password" class="form-control" placeholder="Contrasena"
-                 required>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-epg w-100">
-        <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar
-      </button>
-    </form>
+    </div>
+
+    <div class="brand-bottom">
+      <span>© 2026 · Universidad Nacional de Piura</span>
+      <span><i class="bi bi-shield-lock-fill" style="color:var(--gold);"></i> Acceso seguro</span>
+    </div>
   </div>
+
+  <!-- ── PANEL DERECHO FORMULARIO ── -->
+  <div class="login-form-side">
+    <div class="login-card">
+
+      <div class="form-h">
+        <span class="badge-w"><i class="bi bi-shield-lock-fill"></i> Portal Institucional</span>
+        <h1>Bienvenido</h1>
+        <p>Ingresa tus credenciales para acceder al sistema.</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+          <div class="alert-flash">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ msg }}</span>
+            <span class="close-x" onclick="this.parentElement.remove()">
+              <i class="bi bi-x-lg"></i>
+            </span>
+          </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <div class="input-wrap">
+            <input type="text" name="username" id="username"
+                   placeholder="Ingresa tu usuario" required autofocus autocomplete="username">
+            <i class="bi bi-person-fill input-ico"></i>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="input-wrap">
+            <input type="password" name="password" id="password"
+                   placeholder="••••••••" required autocomplete="current-password">
+            <i class="bi bi-lock-fill input-ico"></i>
+            <span class="toggle-pwd" onclick="togglePwd()" title="Mostrar/ocultar contraseña">
+              <i class="bi bi-eye" id="iconPwd"></i>
+            </span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <i class="bi bi-box-arrow-in-right"></i>
+          Ingresar al Sistema
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <span class="dot-status">Sistema operativo</span>
+        <span>v.2026 · EPG</span>
+      </div>
+
+    </div>
+  </div>
+
 </div>
-{% endblock %}
+
+<script>
+function togglePwd() {
+  const inp = document.getElementById('password');
+  const ico = document.getElementById('iconPwd');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.classList.remove('bi-eye');
+    ico.classList.add('bi-eye-slash');
+  } else {
+    inp.type = 'password';
+    ico.classList.remove('bi-eye-slash');
+    ico.classList.add('bi-eye');
+  }
+}
+</script>
+
+</body>
+</html>

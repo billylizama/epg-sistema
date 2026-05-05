@@ -87,10 +87,11 @@ def exportar():
     ws.row_dimensions[1].height = 30
 
     fills = {
-        'BIEN': PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),
-        'CRITICO': PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),
-        'EN EL LIMITE': PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),
-        'SOBREPASADO': PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),
+        'BIEN':           PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),
+        'EN OBSERVACION': PatternFill(start_color='FED7AA', end_color='FED7AA', fill_type='solid'),
+        'CRITICO':        PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),
+        'EN EL LIMITE':   PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),
+        'SOBREPASADO':    PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),
     }
 
     programas = Programa.query.order_by(Programa.facultad, Programa.tipo_programa).all()
